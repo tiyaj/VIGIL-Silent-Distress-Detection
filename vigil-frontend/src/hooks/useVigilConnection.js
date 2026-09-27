@@ -13,11 +13,13 @@ import { useRef, useCallback } from 'react';
 import { useCall } from '../context/CallContext';
 import { createVigilSocket } from '../services/websocket';
 import { createVigilCall } from '../services/webrtc';
+import { createTranscriptStream } from '../services/speechRecognition';
 
 export function useVigilConnection() {
   const call = useCall();
   const socketRef = useRef(null);
   const rtcRef = useRef(null);
+  const transcriptRef = useRef(null);
 
   const startRealCall = useCallback(async (destParticipant) => {
     if (destParticipant) call.setParticipant(destParticipant);
@@ -55,6 +57,8 @@ export function useVigilConnection() {
         if (progress >= 100) {
           call.setCallState('monitoring');
           call.addEvent('Baseline calibration complete. Live monitoring active.', 'info');
+          transcriptRef.current = createTranscriptStream({ socket });
+          transcriptRef.current.start();
         }
       });
 
@@ -69,9 +73,10 @@ export function useVigilConnection() {
       });
 
       socket.on('alert_status', ({ status, timestamp }) => {
-        call.setAlertStatus(status);
+        const normalizedStatus = status === 'cancelled' ? 'cancelled_by_user' : status;
+        call.setAlertStatus(normalizedStatus);
         if (timestamp) call.setAlertSentTimestamp(timestamp);
-        call.addEvent(`Alert status: ${status}`, status === 'alert_dispatched' ? 'alert' : 'info');
+        call.addEvent(`Alert status: ${normalizedStatus}`, normalizedStatus === 'alert_dispatched' ? 'alert' : 'info');
       });
 
       socket.on('error', ({ message }) => {
@@ -88,6 +93,7 @@ export function useVigilConnection() {
   }, [call]);
 
   const endRealCall = useCallback(() => {
+    transcriptRef.current?.stop();
     rtcRef.current?.stop();
     socketRef.current?.disconnect();
     call.setCallState('ended');
