@@ -27,3 +27,6 @@ dist-ssr/
 *.sln
 *.sw?
 Thumbs.db
+backend/.venv/
+__pycache__/
+*.pyc
