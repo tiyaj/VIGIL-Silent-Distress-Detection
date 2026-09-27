@@ -12,11 +12,13 @@ class CalibrationTimer:
         self,
         call_id: str,
         total_seconds: int = CALIBRATION_SECONDS,
+        step_seconds: int = 4,
         on_progress: Optional[Callable[[dict], Coroutine[Any, Any, None]]] = None,
         on_complete: Optional[Callable[[], Coroutine[Any, Any, None]]] = None,
     ):
         self.call_id = call_id
         self.total_seconds = total_seconds
+        self.step_seconds = step_seconds
         self.on_progress = on_progress
         self.on_complete = on_complete
         self.task: Optional[asyncio.Task] = None
@@ -24,8 +26,10 @@ class CalibrationTimer:
 
     async def _run(self):
         try:
-            for remaining in range(self.total_seconds, -1, -1):
-                progress = int(((self.total_seconds - remaining) / max(self.total_seconds, 1)) * 100)
+            elapsed = 0
+            while elapsed < self.total_seconds:
+                remaining = self.total_seconds - elapsed
+                progress = int((elapsed / max(self.total_seconds, 1)) * 100)
                 event = {
                     "type": "calibration_progress",
                     "payload": {
@@ -36,13 +40,23 @@ class CalibrationTimer:
                 if self.on_progress:
                     await self.on_progress(event)
 
-                if remaining == 0:
-                    self.is_complete = True
-                    if self.on_complete:
-                        await self.on_complete()
-                    break
+                step = min(self.step_seconds, self.total_seconds - elapsed)
+                await asyncio.sleep(step)
+                elapsed += step
 
-                await asyncio.sleep(1)
+            self.is_complete = True
+            complete_event = {
+                "type": "calibration_progress",
+                "payload": {
+                    "secondsRemaining": 0,
+                    "progress": 100,
+                },
+            }
+            if self.on_progress:
+                await self.on_progress(complete_event)
+            if self.on_complete:
+                await self.on_complete()
+
         except asyncio.CancelledError:
             logger.debug(f"Calibration timer cancelled for call '{self.call_id}'")
 

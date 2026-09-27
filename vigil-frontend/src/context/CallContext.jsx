@@ -100,10 +100,10 @@ export const CallProvider = ({ children }) => {
     return () => clearInterval(timer);
   }, [callState]);
 
-  // Calibration countdown effect
+  // Calibration countdown effect (Simulated demo mode only)
   useEffect(() => {
     let interval;
-    if (callState === 'calibrating') {
+    if (callState === 'calibrating' && isDemoMode) {
       interval = setInterval(() => {
         setCalibrationSecondsRemaining((prev) => {
           if (prev <= 1) {
@@ -124,7 +124,7 @@ export const CallProvider = ({ children }) => {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [callState]);
+  }, [callState, isDemoMode]);
 
   // Audio frequency simulation or live analyser loop
   useEffect(() => {
