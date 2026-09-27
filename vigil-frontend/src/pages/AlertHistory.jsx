@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCall } from '../context/CallContext';
+import { api } from '../services/api';
 import { PageHeader } from '../components/common/PageHeader';
 import {
   Clock,
@@ -8,10 +9,29 @@ import {
 
 export const AlertHistory = () => {
   const { alertHistory, isDemoMode } = useCall();
-  const [selectedAlert, setSelectedAlert] = useState(alertHistory[0] || null);
+  const [liveAlerts, setLiveAlerts] = useState([]);
+  const [selectedAlert, setSelectedAlert] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredHistory = alertHistory.filter(
+  useEffect(() => {
+    api.getAlertHistory()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLiveAlerts(data);
+          setSelectedAlert(data[0]);
+        } else if (alertHistory.length > 0) {
+          setSelectedAlert(alertHistory[0]);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch alert history from backend:', err);
+        if (alertHistory.length > 0) setSelectedAlert(alertHistory[0]);
+      });
+  }, [alertHistory]);
+
+  const displayList = liveAlerts.length > 0 ? liveAlerts : alertHistory;
+
+  const filteredHistory = displayList.filter(
     (item) =>
       item.callWith.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

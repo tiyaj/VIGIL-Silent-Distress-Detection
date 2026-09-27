@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCall } from '../../context/CallContext';
+import { api } from '../../services/api';
 import { KeyRound, Check } from 'lucide-react';
 
 export const CodewordForm = () => {
@@ -7,8 +8,24 @@ export const CodewordForm = () => {
   const [formData, setFormData] = useState({ ...codewords });
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    api.getSettings()
+      .then((data) => {
+        if (data?.codewords) {
+          setFormData(data.codewords);
+          setCodewords(data.codewords);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch codewords from backend:', err));
+  }, [setCodewords]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      await api.saveCodewords(formData);
+    } catch (err) {
+      console.warn('Backend save codewords failed:', err);
+    }
     setCodewords(formData);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);

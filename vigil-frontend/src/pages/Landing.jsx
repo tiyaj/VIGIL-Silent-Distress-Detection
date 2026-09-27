@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCall } from '../context/CallContext';
+import { useVigilConnection } from '../hooks/useVigilConnection';
 import { PageHeader } from '../components/common/PageHeader';
-import { Phone, Mic, ShieldAlert, PhoneCall } from 'lucide-react';
+import { Phone, Mic, ShieldAlert, PhoneCall, Radio, Server } from 'lucide-react';
 
 export const Landing = () => {
   const navigate = useNavigate();
-  const { startCall, isDemoMode } = useCall();
+  const { startCall, isDemoMode, setIsDemoMode } = useCall();
+  const { startRealCall } = useVigilConnection();
 
   const [recipientType, setRecipientType] = useState('preset');
   const [selectedPreset, setSelectedPreset] = useState('1');
@@ -58,7 +60,11 @@ export const Landing = () => {
       };
     }
 
-    await startCall(dest, isDemoMode);
+    if (isDemoMode) {
+      await startCall(dest, true);
+    } else {
+      await startRealCall(dest, dest.id);
+    }
     navigate('/call');
   };
 
@@ -74,6 +80,36 @@ export const Landing = () => {
         {/* Main Dial Form */}
         <div className="md:col-span-7 space-y-6">
           <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 backdrop-blur-md shadow-sm dark:shadow-xl transition-colors duration-200">
+            {/* Mode Switcher */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 mb-5">
+              <div className="flex items-center gap-2.5">
+                {isDemoMode ? (
+                  <Radio className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <Server className="w-4 h-4 text-emerald-500" />
+                )}
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                    {isDemoMode ? 'Demo Mode (Simulated)' : 'Live Mode (FastAPI Backend)'}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {isDemoMode ? 'Client-side timers & mock distress' : 'Real WebRTC & live WebSocket /ws/telemetry'}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDemoMode(!isDemoMode)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                  isDemoMode
+                    ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200 dark:border-amber-700'
+                    : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-700'
+                }`}
+              >
+                {isDemoMode ? 'Switch to Live' : 'Switch to Demo'}
+              </button>
+            </div>
+
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <PhoneCall className="w-4 h-4 text-sky-600 dark:text-sky-400" />
               Choose Call Destination

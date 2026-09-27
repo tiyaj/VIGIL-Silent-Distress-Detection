@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCall } from '../../context/CallContext';
+import { useVigilConnection } from '../../hooks/useVigilConnection';
 import { Mic, MicOff, PhoneOff, Volume2, ShieldAlert } from 'lucide-react';
 
 export const CallControls = () => {
@@ -12,6 +13,17 @@ export const CallControls = () => {
     triggerCancellationPhrase,
     codewords,
   } = useCall();
+  const { endRealCall, triggerLiveCancellation } = useVigilConnection();
+
+  const handleEnd = () => {
+    endRealCall();
+    endCall();
+  };
+
+  const handleCancelAlert = () => {
+    triggerLiveCancellation();
+    triggerCancellationPhrase();
+  };
 
   const isCallActive = callState === 'calibrating' || callState === 'monitoring';
 
@@ -53,7 +65,7 @@ export const CallControls = () => {
         {/* Cancellation button if alert is active */}
         {alertStatus === 'alert_dispatched' && (
           <button
-            onClick={triggerCancellationPhrase}
+            onClick={handleCancelAlert}
             className="px-4 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 font-medium text-sm flex items-center gap-2 transition shadow-sm"
             title={`Neutralize alert with phrase: ${codewords.cancellationPhrase}`}
           >
@@ -64,7 +76,7 @@ export const CallControls = () => {
 
         {/* End Call Control */}
         <button
-          onClick={endCall}
+          onClick={handleEnd}
           className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-medium text-sm flex items-center gap-2 transition shadow-md shadow-rose-600/30"
           title="Disconnect call and terminate acoustic monitoring"
         >

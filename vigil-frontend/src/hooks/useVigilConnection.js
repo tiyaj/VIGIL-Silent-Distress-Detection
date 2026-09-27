@@ -1,13 +1,7 @@
 // src/hooks/useVigilConnection.js
 //
-// Bridges the real backend (webrtc.js + websocket.js) into Tiya's existing
-// CallContext. Named useVigilConnection (not useCall) because useCall is
-// already taken by CallContext.jsx's own hook - don't rename that one.
-//
-// Usage in Call.jsx or Landing.jsx, alongside the existing useCall():
-//   const { startRealCall, endRealCall } = useVigilConnection();
-//   ...
-//   onClick={() => startRealCall(selectedParticipant)}
+// Bridges the real backend (webrtc.js + websocket.js) into CallContext.
+// Provides startRealCall, endRealCall, and triggerLiveCancellation.
 
 import { useRef, useCallback } from 'react';
 import { useCall } from '../context/CallContext';
@@ -15,15 +9,28 @@ import { createVigilSocket } from '../services/websocket';
 import { createVigilCall } from '../services/webrtc';
 import { createTranscriptStream } from '../services/speechRecognition';
 
+// Shared module-level instances so call lifecycle can be controlled across pages
+let activeSocket = null;
+let activeRtc = null;
+let activeTranscript = null;
+
 export function useVigilConnection() {
   const call = useCall();
   const socketRef = useRef(null);
   const rtcRef = useRef(null);
   const transcriptRef = useRef(null);
 
-  const startRealCall = useCallback(async (destParticipant) => {
+  const startRealCall = useCallback(async (destParticipant, callId = null) => {
     if (destParticipant) call.setParticipant(destParticipant);
     call.setCallState('requesting_permission');
+    call.setEventTimeline([]);
+    call.setContributingSignals([]);
+    call.setAlertStatus('idle');
+    call.setAlertSentTimestamp(null);
+    call.setRiskScore(null);
+    call.setHasValidRiskData(false);
+
+    const effectiveCallId = callId || destParticipant?.id || `call_${Date.now()}`;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -31,8 +38,9 @@ export function useVigilConnection() {
       call.setCallState('connecting');
       call.addEvent(`Requesting connection to ${destParticipant?.name || 'participant'}`, 'info');
 
-      const socket = createVigilSocket();
+      const socket = createVigilSocket(effectiveCallId);
       socketRef.current = socket;
+      activeSocket = socket;
       await socket.connect();
 
       const rtc = createVigilCall({
@@ -43,13 +51,14 @@ export function useVigilConnection() {
             call.setCallState('calibrating');
             call.setCalibrationSecondsRemaining(15);
             call.setCalibrationProgress(0);
-            call.addEvent('Call connected. Starting 15s baseline calibration.', 'info');
+            call.addEvent('Call connected. Commencing 15s baseline calibration.', 'info');
           } else if (state === 'failed' || state === 'disconnected') {
             call.addEvent('Connection lost.', 'warning');
           }
         },
       });
       rtcRef.current = rtc;
+      activeRtc = rtc;
 
       socket.on('calibration_progress', ({ secondsRemaining, progress }) => {
         call.setCalibrationSecondsRemaining(secondsRemaining);
@@ -57,8 +66,10 @@ export function useVigilConnection() {
         if (progress >= 100) {
           call.setCallState('monitoring');
           call.addEvent('Baseline calibration complete. Live monitoring active.', 'info');
-          transcriptRef.current = createTranscriptStream({ socket });
-          transcriptRef.current.start();
+          const transcript = createTranscriptStream({ socket });
+          transcriptRef.current = transcript;
+          activeTranscript = transcript;
+          transcript.start();
         }
       });
 
@@ -66,6 +77,8 @@ export function useVigilConnection() {
         call.setRiskScore(score);
         call.setRiskLevel(level);
         call.setContributingSignals(signals || []);
+        call.setHasValidRiskData(true);
+        call.setLastRiskUpdate(new Date().toLocaleTimeString());
       });
 
       socket.on('codeword_detected', ({ codeword }) => {
@@ -94,11 +107,39 @@ export function useVigilConnection() {
 
   const endRealCall = useCallback(() => {
     transcriptRef.current?.stop();
+    activeTranscript?.stop();
+    activeTranscript = null;
+
     rtcRef.current?.stop();
+    activeRtc?.stop();
+    activeRtc = null;
+
     socketRef.current?.disconnect();
+    activeSocket?.disconnect();
+    activeSocket = null;
+
     call.setCallState('ended');
     call.addEvent('Call ended.', 'info');
   }, [call]);
 
-  return { startRealCall, endRealCall };
+  const triggerLiveCancellation = useCallback((phrase) => {
+    const cancelPhrase = phrase || call.codewords?.cancellationPhrase || 'Status Clear Blue';
+    if (activeSocket) {
+      activeSocket.send('transcript', { text: cancelPhrase, timestamp: Date.now() });
+    }
+  }, [call.codewords]);
+
+  const triggerLiveDistress = useCallback((codeword) => {
+    const distressWord = codeword || call.codewords?.distressCodeword || 'Silver Willow';
+    if (activeSocket) {
+      activeSocket.send('transcript', { text: distressWord, timestamp: Date.now() });
+    }
+  }, [call.codewords]);
+
+  return {
+    startRealCall,
+    endRealCall,
+    triggerLiveCancellation,
+    triggerLiveDistress,
+  };
 }

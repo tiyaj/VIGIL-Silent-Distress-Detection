@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCall } from '../../context/CallContext';
+import { api } from '../../services/api';
 import { UserCheck, Check } from 'lucide-react';
 
 export const TrustedContactForm = () => {
@@ -7,8 +8,24 @@ export const TrustedContactForm = () => {
   const [formData, setFormData] = useState({ ...trustedContact });
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    api.getSettings()
+      .then((data) => {
+        if (data?.trustedContact) {
+          setFormData(data.trustedContact);
+          setTrustedContact(data.trustedContact);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch settings from backend:', err));
+  }, [setTrustedContact]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      await api.saveTrustedContact(formData);
+    } catch (err) {
+      console.warn('Backend save failed:', err);
+    }
     setTrustedContact(formData);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);

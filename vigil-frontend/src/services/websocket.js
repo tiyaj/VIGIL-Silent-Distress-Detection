@@ -14,13 +14,14 @@
 
 const WS_URL = import.meta.env.VITE_WS_ANALYSIS_URL || 'ws://localhost:8000/ws/telemetry';
 
-export function createVigilSocket() {
+export function createVigilSocket(callId) {
   let ws = null;
   const listeners = {};
 
   function connect() {
     return new Promise((resolve, reject) => {
-      ws = new WebSocket(WS_URL);
+      const targetUrl = callId ? `${WS_URL}?call_id=${encodeURIComponent(callId)}` : WS_URL;
+      ws = new WebSocket(targetUrl);
       ws.onopen = () => resolve();
       ws.onerror = (err) => reject(err);
       ws.onmessage = (event) => {
