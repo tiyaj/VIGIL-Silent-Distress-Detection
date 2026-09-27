@@ -29,12 +29,22 @@ class CodewordMatcher:
 
         if self.allow_cancellation and self.cancellation_phrase:
             norm_cancel = re.sub(r'[^a-z0-9]', '', self.cancellation_phrase.lower())
-            if self.cancellation_phrase.lower() in clean_text or (norm_cancel and norm_cancel in normalized_text):
+            cancel_parts = [p.strip().lower() for p in self.cancellation_phrase.split() if len(p.strip()) > 2]
+            if (
+                self.cancellation_phrase.lower() in clean_text
+                or (norm_cancel and norm_cancel in normalized_text)
+                or (cancel_parts and all(p in clean_text for p in cancel_parts))
+            ):
                 return "cancellation"
 
         if self.distress_codeword:
             norm_distress = re.sub(r'[^a-z0-9]', '', self.distress_codeword.lower())
-            if self.distress_codeword.lower() in clean_text or (norm_distress and norm_distress in normalized_text):
+            distress_parts = [p.strip().lower() for p in self.distress_codeword.split() if len(p.strip()) > 2]
+            if (
+                self.distress_codeword.lower() in clean_text
+                or (norm_distress and norm_distress in normalized_text)
+                or (distress_parts and all(p in clean_text for p in distress_parts))
+            ):
                 return "distress"
 
         return None

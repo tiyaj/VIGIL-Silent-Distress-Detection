@@ -50,7 +50,7 @@ export function createVigilCall({ socket, localStream, onRemoteStream, onConnect
   function startAudioChunkCapture() {
     recorder = new MediaRecorder(localStream, { mimeType: 'audio/webm;codecs=opus' });
     recorder.ondataavailable = async (e) => {
-      if (e.data.size === 0) return;
+      if (e.data.size === 0 || !recorder || recorder.state === 'inactive') return;
       const buffer = await e.data.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
       socket.send('audio_chunk', { chunk: base64, mimeType: 'audio/webm;codecs=opus' });

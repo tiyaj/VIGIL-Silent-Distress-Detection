@@ -13,10 +13,12 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
   }
 
   const recognition = new SpeechRecognition();
-  recognition.continuous = true;
+  // In Chrome, continuous: false with automatic restart is significantly more reliable
+  // than continuous: true, which frequently drops audio buffers after pauses.
+  recognition.continuous = false;
   recognition.interimResults = true; // Stream interim words immediately for zero-latency keyword spotting
   recognition.maxAlternatives = 3;   // Check multiple acoustic hypothesis candidates
-  recognition.lang = navigator.language || 'en-US';
+  recognition.lang = 'en-IN';        // Optimized for Indian English phonetics
 
   let shouldRestart = false;
   let restartTimer = null;
@@ -24,7 +26,17 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
   let lastDispatchTime = 0;
 
   recognition.onstart = () => {
-    console.log('[VigilTranscript] Speech recognition session started. Listening on mic...');
+    console.log('[VigilTranscript] Speech recognition session active. Listening on mic (lang: en-IN)...');
+    onStatus?.('listening');
+  };
+
+  recognition.onspeechstart = () => {
+    console.log('[VigilTranscript] Mic audio detected! Transcribing speech...');
+    onStatus?.('speaking');
+  };
+
+  recognition.onspeechend = () => {
+    console.log('[VigilTranscript] Speech ended. Finalizing recognition...');
     onStatus?.('listening');
   };
 
@@ -44,8 +56,7 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
     const textToSend = capturedUtterance.trim();
     const now = Date.now();
 
-    // Debounce to prevent flooding socket on same word while keeping response <100ms
-    if (textToSend && (textToSend.toLowerCase() !== lastDispatchedText.toLowerCase() || now - lastDispatchTime > 1200)) {
+    if (textToSend && (textToSend.toLowerCase() !== lastDispatchedText.toLowerCase() || now - lastDispatchTime > 1000)) {
       lastDispatchedText = textToSend;
       lastDispatchTime = now;
       console.log(`[VigilTranscript] Transcribed: "${textToSend}"`);
@@ -55,16 +66,18 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
   };
 
   recognition.onerror = (event) => {
-    // 'no-speech' is expected during pauses
-    if (event.error === 'no-speech') return;
+    if (event.error === 'no-speech') {
+      console.debug('[VigilTranscript] No speech detected in listening window.');
+      return;
+    }
 
     console.warn('[VigilTranscript] Speech recognition error:', event.error);
     if (event.error === 'network') {
-      onError?.('Google Speech Service network error. Check internet connection or use manual trigger.');
+      onError?.('Google Speech Service network error. Check internet connection or click "Say Silver Willow".');
     } else if (event.error === 'not-allowed') {
       onError?.('Microphone access denied for SpeechRecognition. Allow mic permissions in Chrome.');
     } else {
-      onError?.(`Speech recognition error: ${event.error}`);
+      onError?.(`Speech recognition notice: ${event.error}`);
     }
   };
 
@@ -72,7 +85,7 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
     onStatus?.('idle');
     if (shouldRestart) {
       clearTimeout(restartTimer);
-      // Brief delay before restart to avoid browser InvalidStateError
+      // Restart immediately to maintain continuous seamless listening loop
       restartTimer = setTimeout(() => {
         if (shouldRestart) {
           try {
@@ -81,7 +94,7 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
             console.debug('[VigilTranscript] Restart deferred:', e);
           }
         }
-      }, 350);
+      }, 100);
     }
   };
 
@@ -100,6 +113,10 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
       try {
         recognition.stop();
       } catch (e) {}
+    },
+    setLanguage(newLang) {
+      recognition.lang = newLang;
+      console.log(`[VigilTranscript] Language switched to: ${newLang}`);
     },
   };
 }

@@ -52,7 +52,7 @@ export function createVigilSocket(callId) {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type, payload }));
     } else {
-      console.warn(`[VigilSocket] Cannot send "${type}" - socket not open`);
+      console.debug(`[VigilSocket] Cannot send "${type}" - socket not open (readyState: ${ws?.readyState})`);
     }
   }
 
