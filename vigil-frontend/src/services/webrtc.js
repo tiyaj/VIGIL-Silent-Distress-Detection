@@ -55,7 +55,7 @@ export function createVigilCall({ socket, localStream, onRemoteStream, onConnect
       const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
       socket.send('audio_chunk', { chunk: base64, mimeType: 'audio/webm;codecs=opus' });
     };
-    recorder.start(250); // send a chunk every 250ms
+    recorder.start(4000); // send a chunk every 4s — matches the ML pipeline's analysis window
   }
 
   return {
