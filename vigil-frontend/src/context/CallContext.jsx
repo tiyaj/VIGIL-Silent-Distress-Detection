@@ -82,19 +82,20 @@ export const CallProvider = ({ children }) => {
   ]);
 
   // Audio Visualizer data stream
-  const [audioFrequencies, setAudioFrequencies] = useState(new Array(24).fill(12));
+  const [audioStream, setAudioStream] = useState(null);
+  const [audioFrequencies, setAudioFrequencies] = useState(new Array(24).fill(6));
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  // Call timer effect
+  // Call timer effect - preserves duration when call ends, resets only when idle
   useEffect(() => {
     let timer;
     if (callState === 'calibrating' || callState === 'monitoring') {
       timer = setInterval(() => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
-    } else if (callState === 'idle' || callState === 'ended') {
+    } else if (callState === 'idle') {
       setCallDuration(0);
     }
     return () => clearInterval(timer);
@@ -126,17 +127,49 @@ export const CallProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [callState, isDemoMode]);
 
-  // Audio frequency simulation or live analyser loop
+  // Audio frequency visualizer: uses real Web Audio API from mic stream when available
   useEffect(() => {
-    if (callState === 'calibrating' || callState === 'monitoring') {
+    if ((callState === 'calibrating' || callState === 'monitoring') && audioStream && !isMuted) {
+      let audioCtx;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = audioCtx;
+        const source = audioCtx.createMediaStreamSource(audioStream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.7;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        const updateLiveWaveform = () => {
+          analyser.getByteFrequencyData(dataArray);
+          // Map to 24 frequency bars, scale to percentage (6% to 95%)
+          const newFrequencies = Array.from({ length: 24 }, (_, i) => {
+            const raw = dataArray[i % dataArray.length] || 0;
+            return Math.max(6, Math.min(95, Math.round((raw / 255) * 100)));
+          });
+          setAudioFrequencies(newFrequencies);
+          animationFrameRef.current = requestAnimationFrame(updateLiveWaveform);
+        };
+        animationFrameRef.current = requestAnimationFrame(updateLiveWaveform);
+
+        return () => {
+          if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+          audioCtx?.close().catch(() => {});
+        };
+      } catch (err) {
+        console.warn('Real audio analyser failed, falling back to simulated:', err);
+      }
+    } else if (callState === 'calibrating' || callState === 'monitoring') {
       const updateWaveform = () => {
         if (!isMuted) {
-          // Generate realistic acoustic jitter & wave patterns
-          const baseHeight = callState === 'calibrating' ? 25 : (riskScore && riskScore > 50 ? 55 : 30);
+          const baseHeight = callState === 'calibrating' ? 20 : (riskScore && riskScore > 50 ? 55 : 25);
           const newFrequencies = Array.from({ length: 24 }, (_, i) => {
             const harmonic = Math.sin(Date.now() / 200 + i * 0.4);
-            const noise = (Math.random() - 0.5) * 20;
-            return Math.max(8, Math.min(95, Math.floor(baseHeight + harmonic * 25 + noise)));
+            const noise = (Math.random() - 0.5) * 15;
+            return Math.max(6, Math.min(95, Math.floor(baseHeight + harmonic * 20 + noise)));
           });
           setAudioFrequencies(newFrequencies);
         } else {
@@ -146,13 +179,13 @@ export const CallProvider = ({ children }) => {
       };
       animationFrameRef.current = requestAnimationFrame(updateWaveform);
     } else {
-      setAudioFrequencies(new Array(24).fill(8));
+      setAudioFrequencies(new Array(24).fill(6));
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     }
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [callState, isMuted, riskScore]);
+  }, [callState, audioStream, isMuted, riskScore]);
 
   // Helper to append events to the timeline
   const addEvent = (description, type = 'info', metadata = null) => {
@@ -324,6 +357,9 @@ export const CallProvider = ({ children }) => {
         participant,
         setParticipant,
         callDuration,
+        setCallDuration,
+        audioStream,
+        setAudioStream,
         isMuted,
         toggleMute,
         micPermission,

@@ -23,6 +23,7 @@ export function useVigilConnection() {
   const startRealCall = useCallback(async (destParticipant, callId = null) => {
     if (destParticipant) call.setParticipant(destParticipant);
     call.setCallState('requesting_permission');
+    call.setCallDuration?.(0);
     call.setEventTimeline?.([]);
     call.setContributingSignals?.([]);
     call.setAlertStatus?.('idle');
@@ -34,6 +35,7 @@ export function useVigilConnection() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      call.setAudioStream?.(stream);
       call.setMicPermission('granted');
       call.setCallState('connecting');
       call.addEvent(`Requesting connection to ${destParticipant?.name || 'participant'}`, 'info');
@@ -50,10 +52,12 @@ export function useVigilConnection() {
       call.addEvent?.('Connected to monitoring server. Commencing 15s baseline calibration.', 'info');
 
       // Start real-time speech recognition immediately so codewords trigger instantly from second 0
+      let hasLoggedListening = false;
       const transcript = createTranscriptStream({
         socket,
         onStatus: (status) => {
-          if (status === 'listening') {
+          if (status === 'listening' && !hasLoggedListening) {
+            hasLoggedListening = true;
             call.addEvent?.('Voice speech recognition active. Say "Silver Willow" to trigger.', 'info');
           }
         },
@@ -61,7 +65,7 @@ export function useVigilConnection() {
           call.addEvent?.(`Speech detected: "${text}"`, 'info');
         },
         onError: (errMessage) => {
-          call.addEvent?.(`Speech recognition notice: ${errMessage}`, 'warning');
+          call.addEvent?.(`Speech notice: ${errMessage}`, 'warning');
         },
       });
       transcriptRef.current = transcript;
@@ -138,6 +142,7 @@ export function useVigilConnection() {
     activeSocket?.disconnect();
     activeSocket = null;
 
+    call.setAudioStream?.(null);
     call.setCallState('ended');
     call.addEvent('Call ended.', 'info');
   }, [call]);

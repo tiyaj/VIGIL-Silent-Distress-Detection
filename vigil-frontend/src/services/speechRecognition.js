@@ -13,47 +13,61 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
   }
 
   const recognition = new SpeechRecognition();
-  // In Chrome, continuous: false with automatic restart is significantly more reliable
-  // than continuous: true, which frequently drops audio buffers after pauses.
-  recognition.continuous = false;
+  // continuous: true prevents the 8-second silence termination loop in Chrome
+  recognition.continuous = true;
   recognition.interimResults = true; // Stream interim words immediately for zero-latency keyword spotting
   recognition.maxAlternatives = 3;   // Check multiple acoustic hypothesis candidates
-  recognition.lang = 'en-IN';        // Optimized for Indian English phonetics
+  // Use browser locale with fallback to en-US / en-IN
+  recognition.lang = navigator.language || 'en-US';
 
   let shouldRestart = false;
   let restartTimer = null;
   let lastDispatchedText = '';
   let lastDispatchTime = 0;
+  let consecutiveNoSpeechCount = 0;
 
   recognition.onstart = () => {
-    console.log('[VigilTranscript] Speech recognition session active. Listening on mic (lang: en-IN)...');
+    console.log(`[VigilTranscript] Speech recognition session active. Listening on mic (lang: ${recognition.lang})...`);
     onStatus?.('listening');
   };
 
   recognition.onspeechstart = () => {
-    console.log('[VigilTranscript] Mic audio detected! Transcribing speech...');
+    console.log('[VigilTranscript] Mic voice activity detected! Transcribing speech...');
     onStatus?.('speaking');
   };
 
   recognition.onspeechend = () => {
-    console.log('[VigilTranscript] Speech ended. Finalizing recognition...');
+    console.log('[VigilTranscript] Speech pause detected.');
     onStatus?.('listening');
   };
 
   recognition.onresult = (event) => {
-    let capturedUtterance = '';
+    consecutiveNoSpeechCount = 0;
+    let bestText = '';
 
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       const res = event.results[i];
+      if (!res || res.length === 0) continue;
+
+      // Primary hypothesis
+      const primary = res[0].transcript.trim();
+
+      // Check if any alternative contains codeword keywords
+      let matchedText = primary;
       for (let j = 0; j < res.length; ++j) {
-        const text = res[j].transcript.trim();
-        if (text) {
-          capturedUtterance += (capturedUtterance ? ' ' : '') + text;
+        const altText = res[j].transcript.trim().toLowerCase();
+        if (altText.includes('silver') || altText.includes('willow') || altText.includes('clear blue')) {
+          matchedText = res[j].transcript.trim();
+          break;
         }
+      }
+
+      if (matchedText) {
+        bestText = matchedText;
       }
     }
 
-    const textToSend = capturedUtterance.trim();
+    const textToSend = bestText.trim();
     const now = Date.now();
 
     if (textToSend && (textToSend.toLowerCase() !== lastDispatchedText.toLowerCase() || now - lastDispatchTime > 1000)) {
@@ -67,7 +81,11 @@ export function createTranscriptStream({ socket, onTranscript, onError, onStatus
 
   recognition.onerror = (event) => {
     if (event.error === 'no-speech') {
-      console.debug('[VigilTranscript] No speech detected in listening window.');
+      consecutiveNoSpeechCount++;
+      console.debug(`[VigilTranscript] No speech detected (streak: ${consecutiveNoSpeechCount}).`);
+      if (consecutiveNoSpeechCount === 3) {
+        onError?.('Chrome Speech Service is receiving silence from mic. Verify macOS input volume or click "Say Silver Willow".');
+      }
       return;
     }
 
