@@ -3,8 +3,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 const CallContext = createContext(null);
 
 export const CallProvider = ({ children }) => {
-  // Navigation / Mode
-  const [isDemoMode, setIsDemoMode] = useState(true);
+  // Navigation / Mode (Default to Live Mode for real backend monitoring)
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Settings: Contact & Codewords
   const [trustedContact, setTrustedContact] = useState({

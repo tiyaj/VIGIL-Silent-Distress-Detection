@@ -179,9 +179,14 @@ export const Call = () => {
               </NavLink>
             </div>
             {eventTimeline.length > 0 ? (
-              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-                {eventTimeline[0].description} ({eventTimeline[0].timestamp})
-              </p>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {eventTimeline.slice(0, 3).map((evt) => (
+                  <div key={evt.id} className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800/40 pb-1">
+                    <span className={evt.type === 'alert' ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''}>{evt.description}</span>
+                    <span className="text-[10px] font-mono text-slate-400 flex-shrink-0">{evt.timestamp}</span>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-slate-500 dark:text-slate-400 text-[11px]">Awaiting initial acoustic milestones...</p>
             )}
