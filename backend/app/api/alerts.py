@@ -26,6 +26,14 @@ def get_alerts(db: Session = Depends(get_db)):
         call = db.query(Call).filter(Call.id == alert.call_id).first() if alert.call_id else None
         call_with = call.participant_name if call and call.participant_name else "Unknown Participant"
         duration = format_duration(call.duration_seconds if call else None)
+        formatted_signals = []
+        for s in (alert.top_signals or []):
+            if isinstance(s, dict):
+                contrib = f" ({s['contribution']})" if s.get("contribution") else ""
+                formatted_signals.append(f"{s.get('name', 'Vocal Anomaly')}{contrib}")
+            else:
+                formatted_signals.append(str(s))
+
         results.append(
             AlertResponse(
                 id=alert.id,
@@ -36,7 +44,7 @@ def get_alerts(db: Session = Depends(get_db)):
                 riskLevel=alert.risk_level,
                 status=alert.status,
                 codewordTriggered=alert.codeword_triggered,
-                topSignals=alert.top_signals or [],
+                topSignals=formatted_signals,
             )
         )
     return results

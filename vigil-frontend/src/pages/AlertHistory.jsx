@@ -33,10 +33,19 @@ export const AlertHistory = () => {
 
   const filteredHistory = displayList.filter(
     (item) =>
-      item.callWith.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.riskLevel.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.callWith || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.riskLevel || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatDate = (dateStr) => {
+    try {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? 'Recently' : `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } catch {
+      return 'Recently';
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -122,7 +131,7 @@ export const AlertHistory = () => {
                         <span>Duration: {alert.duration}</span>
                       </div>
                       <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                        {new Date(alert.date).toLocaleDateString()} {new Date(alert.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatDate(alert.date)}
                       </span>
                     </div>
                   </div>
@@ -168,7 +177,7 @@ export const AlertHistory = () => {
                 <div className="flex justify-between py-1">
                   <span className="text-slate-500 dark:text-slate-400">Timestamp:</span>
                   <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {new Date(selectedAlert.date).toLocaleString()}
+                    {formatDate(selectedAlert.date)}
                   </span>
                 </div>
               </div>
@@ -179,15 +188,20 @@ export const AlertHistory = () => {
                   Top Contributing Vocal Features
                 </h4>
                 <div className="space-y-1.5">
-                  {selectedAlert.topSignals.map((sig, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between"
-                    >
-                      <span>{sig}</span>
-                      <span className="text-[10px] font-mono text-sky-600 dark:text-sky-400 font-semibold">Verified</span>
-                    </div>
-                  ))}
+                  {(selectedAlert.topSignals || []).map((sig, idx) => {
+                    const label = typeof sig === 'object' && sig !== null
+                      ? `${sig.name || 'Vocal Anomaly'} ${sig.contribution ? `(${sig.contribution})` : ''}`
+                      : String(sig);
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                      >
+                        <span>{label}</span>
+                        <span className="text-[10px] font-mono text-sky-600 dark:text-sky-400 font-semibold">Verified</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
