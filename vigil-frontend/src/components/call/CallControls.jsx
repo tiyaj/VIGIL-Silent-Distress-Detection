@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCall } from '../../context/CallContext';
 import { useVigilConnection } from '../../hooks/useVigilConnection';
-import { Mic, MicOff, PhoneOff, Volume2, ShieldAlert } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, ShieldAlert, Radio } from 'lucide-react';
 
 export const CallControls = () => {
   const {
@@ -11,9 +11,10 @@ export const CallControls = () => {
     callState,
     alertStatus,
     triggerCancellationPhrase,
+    triggerCodewordDetected,
     codewords,
   } = useCall();
-  const { endRealCall, triggerLiveCancellation } = useVigilConnection();
+  const { endRealCall, triggerLiveCancellation, triggerLiveDistress } = useVigilConnection();
 
   const handleEnd = () => {
     endRealCall();
@@ -23,6 +24,11 @@ export const CallControls = () => {
   const handleCancelAlert = () => {
     triggerLiveCancellation();
     triggerCancellationPhrase();
+  };
+
+  const handleTriggerCodeword = () => {
+    triggerLiveDistress();
+    triggerCodewordDetected();
   };
 
   const isCallActive = callState === 'calibrating' || callState === 'monitoring';
@@ -61,6 +67,19 @@ export const CallControls = () => {
           {isMuted ? <MicOff className="w-4 h-4 text-rose-600 dark:text-rose-400" /> : <Mic className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           <span>{isMuted ? 'Muted' : 'Mute Mic'}</span>
         </button>
+
+        {/* Quick trigger distress codeword button */}
+        {alertStatus !== 'alert_dispatched' && (
+          <button
+            onClick={handleTriggerCodeword}
+            disabled={!isCallActive}
+            className="px-3.5 py-2.5 rounded-xl border border-purple-300 dark:border-purple-500/50 bg-purple-50 dark:bg-purple-500/10 text-purple-800 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 font-medium text-xs flex items-center gap-1.5 transition shadow-sm"
+            title={`Trigger spoken codeword match: "${codewords.distressCodeword}"`}
+          >
+            <Radio className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <span>Say "{codewords.distressCodeword}"</span>
+          </button>
+        )}
 
         {/* Cancellation button if alert is active */}
         {alertStatus === 'alert_dispatched' && (

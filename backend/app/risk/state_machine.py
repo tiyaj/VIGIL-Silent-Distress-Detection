@@ -45,6 +45,7 @@ class EscalationStateMachine:
         Neutralizes active alert and resets risk score per Section I.
         """
         self.alert_status = "cancelled_by_user"
+        self.codeword_triggered = False
         self.current_score = 15
         self.current_level = "NORMAL"
         timestamp = datetime.utcnow().isoformat()

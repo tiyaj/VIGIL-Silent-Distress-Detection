@@ -64,7 +64,8 @@ class CallSession:
 
     async def handle_audio_features(self, features: dict):
         """Fuses audio features, evaluates escalation, broadcasts telemetry, and persists to DB."""
-        fusion = fuse_risk(features, codeword_detected=False)
+        is_cw = self.state_machine.codeword_triggered
+        fusion = fuse_risk(features, codeword_detected=is_cw)
         score = fusion["score"]
         level = fusion["level"]
         signals_dict = fusion["signals"]
@@ -118,6 +119,7 @@ class CallSession:
         """Handles distress codeword detection (spoken or transcript)."""
         cw = codeword or self.codeword_matcher.distress_codeword
         logger.warning(f"Distress codeword '{cw}' detected in call '{self.call_id}'!")
+        self.state_machine.codeword_triggered = True
 
         # 1. Broadcast codeword_detected
         await room_manager.broadcast(

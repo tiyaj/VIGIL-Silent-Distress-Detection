@@ -49,6 +49,12 @@ export function useVigilConnection() {
       call.setCalibrationProgress?.(0);
       call.addEvent?.('Connected to monitoring server. Commencing 15s baseline calibration.', 'info');
 
+      // Start real-time speech recognition immediately so codewords trigger instantly from second 0
+      const transcript = createTranscriptStream({ socket });
+      transcriptRef.current = transcript;
+      activeTranscript = transcript;
+      transcript.start();
+
       const rtc = createVigilCall({
         socket,
         localStream: stream,
@@ -70,10 +76,6 @@ export function useVigilConnection() {
         if (progress >= 100) {
           call.setCallState?.('monitoring');
           call.addEvent?.('Baseline calibration complete. Live monitoring active.', 'info');
-          const transcript = createTranscriptStream({ socket });
-          transcriptRef.current = transcript;
-          activeTranscript = transcript;
-          transcript.start();
         }
       });
 
