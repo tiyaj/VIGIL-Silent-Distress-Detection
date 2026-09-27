@@ -40,8 +40,7 @@ async def websocket_telemetry(
                 elif msg_type == "audio_chunk":
                     chunk_b64 = payload.get("chunk", "")
                     mime_type = payload.get("mimeType", "audio/webm;codecs=opus")
-                    features = process_audio_chunk(chunk_b64, mime_type)
-                    await session.handle_audio_features(features)
+                    await session.handle_audio_chunk(chunk_b64, mime_type)
                 elif msg_type == "codeword_detected":
                     await session.trigger_codeword(payload.get("codeword"))
                 elif msg_type == "transcript":

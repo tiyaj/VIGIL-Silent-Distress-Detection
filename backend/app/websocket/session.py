@@ -10,6 +10,7 @@ from app.risk.engine import fuse_risk
 from app.risk.state_machine import EscalationStateMachine
 from app.risk.calibration import CalibrationTimer
 from app.risk.codeword import get_active_codeword_matcher
+from app.services.ml_bridge import audio_buffer_manager, process_audio_chunk
 from app.websocket.manager import room_manager
 
 logger = logging.getLogger("vigil.session")
@@ -54,6 +55,12 @@ class CallSession:
 
     def start_calibration(self):
         self.calibration_timer.start()
+
+    async def handle_audio_chunk(self, chunk_b64: str, mime_type: str = "audio/webm;codecs=opus"):
+        """Decodes chunk, appends to the session's growing raw buffer, and processes acoustic features."""
+        features = process_audio_chunk(chunk_b64, mime_type=mime_type, call_id=self.call_id)
+        if features:
+            await self.handle_audio_features(features)
 
     async def handle_audio_features(self, features: dict):
         """Fuses audio features, evaluates escalation, broadcasts telemetry, and persists to DB."""
@@ -204,6 +211,7 @@ class CallSession:
     def close(self):
         """Finalizes call in DB and cleans up resources."""
         self.calibration_timer.stop()
+        audio_buffer_manager.clear(self.call_id)
         ended_at = datetime.utcnow()
         duration_seconds = int((ended_at - self.started_at).total_seconds())
 
