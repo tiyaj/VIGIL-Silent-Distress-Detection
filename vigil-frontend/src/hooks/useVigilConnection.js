@@ -23,12 +23,12 @@ export function useVigilConnection() {
   const startRealCall = useCallback(async (destParticipant, callId = null) => {
     if (destParticipant) call.setParticipant(destParticipant);
     call.setCallState('requesting_permission');
-    call.setEventTimeline([]);
-    call.setContributingSignals([]);
-    call.setAlertStatus('idle');
-    call.setAlertSentTimestamp(null);
-    call.setRiskScore(null);
-    call.setHasValidRiskData(false);
+    call.setEventTimeline?.([]);
+    call.setContributingSignals?.([]);
+    call.setAlertStatus?.('idle');
+    call.setAlertSentTimestamp?.(null);
+    call.setRiskScore?.(null);
+    call.setHasValidRiskData?.(false);
 
     const effectiveCallId = callId || destParticipant?.id || `call_${Date.now()}`;
 
@@ -43,17 +43,20 @@ export function useVigilConnection() {
       activeSocket = socket;
       await socket.connect();
 
+      // Immediately enter calibrating upon connecting to the monitoring socket
+      call.setCallState?.('calibrating');
+      call.setCalibrationSecondsRemaining?.(15);
+      call.setCalibrationProgress?.(0);
+      call.addEvent?.('Connected to monitoring server. Commencing 15s baseline calibration.', 'info');
+
       const rtc = createVigilCall({
         socket,
         localStream: stream,
         onConnectionStateChange: (state) => {
           if (state === 'connected') {
-            call.setCallState('calibrating');
-            call.setCalibrationSecondsRemaining(15);
-            call.setCalibrationProgress(0);
-            call.addEvent('Call connected. Commencing 15s baseline calibration.', 'info');
+            call.addEvent?.('Peer WebRTC stream connected.', 'info');
           } else if (state === 'failed' || state === 'disconnected') {
-            call.addEvent('Connection lost.', 'warning');
+            call.addEvent?.('Peer WebRTC disconnected.', 'warning');
           }
         },
       });
@@ -61,11 +64,12 @@ export function useVigilConnection() {
       activeRtc = rtc;
 
       socket.on('calibration_progress', ({ secondsRemaining, progress }) => {
-        call.setCalibrationSecondsRemaining(secondsRemaining);
-        call.setCalibrationProgress(progress);
+        call.setCallState?.('calibrating');
+        call.setCalibrationSecondsRemaining?.(secondsRemaining);
+        call.setCalibrationProgress?.(progress);
         if (progress >= 100) {
-          call.setCallState('monitoring');
-          call.addEvent('Baseline calibration complete. Live monitoring active.', 'info');
+          call.setCallState?.('monitoring');
+          call.addEvent?.('Baseline calibration complete. Live monitoring active.', 'info');
           const transcript = createTranscriptStream({ socket });
           transcriptRef.current = transcript;
           activeTranscript = transcript;
@@ -73,16 +77,17 @@ export function useVigilConnection() {
         }
       });
 
-      socket.on('risk_update', ({ score, level, signals }) => {
-        call.setRiskScore(score);
-        call.setRiskLevel(level);
-        call.setContributingSignals(signals || []);
-        call.setHasValidRiskData(true);
-        call.setLastRiskUpdate(new Date().toLocaleTimeString());
+      socket.on('risk_update', ({ score, level, signals, contributing_signals }) => {
+        call.setRiskScore?.(score);
+        call.setRiskLevel?.(level);
+        const attribution = contributing_signals || (Array.isArray(signals) ? signals : []);
+        call.setContributingSignals?.(attribution);
+        call.setHasValidRiskData?.(true);
+        call.setLastRiskUpdate?.(new Date().toLocaleTimeString());
       });
 
       socket.on('codeword_detected', ({ codeword }) => {
-        call.addEvent(`Codeword "${codeword}" detected in voice stream.`, 'alert');
+        call.addEvent?.(`Codeword "${codeword}" detected in voice stream.`, 'alert');
       });
 
       socket.on('alert_status', ({ status, timestamp }) => {

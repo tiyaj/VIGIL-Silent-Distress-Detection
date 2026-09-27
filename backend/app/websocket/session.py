@@ -60,7 +60,8 @@ class CallSession:
         fusion = fuse_risk(features, codeword_detected=False)
         score = fusion["score"]
         level = fusion["level"]
-        signals = fusion["signals"]
+        signals_dict = fusion["signals"]
+        ui_signals = fusion.get("ui_signals", [])
 
         # 1. Broadcast live risk update
         risk_event = {
@@ -68,7 +69,9 @@ class CallSession:
             "payload": {
                 "score": score,
                 "level": level,
-                "signals": signals,
+                "level_code": fusion.get("level_code", 0),
+                "signals": signals_dict,
+                "contributing_signals": ui_signals,
             },
         }
         await room_manager.broadcast(self.call_id, risk_event)
@@ -84,7 +87,7 @@ class CallSession:
                 call_id=self.call_id,
                 score=score,
                 level=level,
-                signals=signals,
+                signals=signals_dict,
             )
             db.add(re)
 
@@ -95,7 +98,7 @@ class CallSession:
                     risk_level=level,
                     status=alert_event["status"],
                     codeword_triggered=False,
-                    top_signals=signals,
+                    top_signals=ui_signals if ui_signals else [signals_dict],
                 )
                 db.add(al)
                 db.commit()
@@ -124,7 +127,9 @@ class CallSession:
                 "payload": {
                     "score": fusion["score"],
                     "level": fusion["level"],
+                    "level_code": fusion.get("level_code", 3),
                     "signals": fusion["signals"],
+                    "contributing_signals": fusion.get("ui_signals", []),
                 },
             },
         )
@@ -150,7 +155,7 @@ class CallSession:
                 risk_level=fusion["level"],
                 status="alert_dispatched",
                 codeword_triggered=True,
-                top_signals=fusion["signals"],
+                top_signals=fusion.get("ui_signals", []),
             )
             db.add(al)
             db.commit()
@@ -183,11 +188,10 @@ class CallSession:
 
         # 3. Update DB
         with SessionLocal() as db:
-            if self.active_alert_id:
-                al = db.query(Alert).filter(Alert.id == self.active_alert_id).first()
-                if al:
-                    al.status = "cancelled_by_user"
-                    db.commit()
+            alerts = db.query(Alert).filter(Alert.call_id == self.call_id, Alert.status == "alert_dispatched").all()
+            for al in alerts:
+                al.status = "cancelled_by_user"
+            db.commit()
 
     async def handle_transcript(self, text: str):
         """Evaluates spoken speech transcript for keywords."""

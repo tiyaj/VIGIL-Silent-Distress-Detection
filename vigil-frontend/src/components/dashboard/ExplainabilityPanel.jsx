@@ -17,6 +17,17 @@ export const ExplainabilityPanel = () => {
     );
   }
 
+  const formattedSignals = Array.isArray(contributingSignals)
+    ? contributingSignals
+    : typeof contributingSignals === 'object' && contributingSignals !== null
+      ? Object.entries(contributingSignals).map(([key, val]) => ({
+          name: key.replace(/_/g, ' ').replace('PCT', '%').toUpperCase(),
+          contribution: typeof val === 'number' ? `+${val}%` : String(val),
+          level: typeof val === 'number' && val > 40 ? 'HIGH' : 'NORMAL',
+          details: `${key}: ${val}`,
+        }))
+      : [];
+
   return (
     <div className="bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800 p-5 backdrop-blur-md shadow-sm transition-colors duration-200">
       <div className="flex items-center justify-between mb-4">
@@ -35,7 +46,7 @@ export const ExplainabilityPanel = () => {
         Acoustic features identified by the backend deep-learning & DSP pipeline that contributed toward the cumulative risk score ({riskScore || 0}/100).
       </p>
 
-      {contributingSignals.length === 0 ? (
+      {formattedSignals.length === 0 ? (
         <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg p-4 text-center">
           <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mx-auto mb-1.5" />
           <p className="text-xs text-slate-800 dark:text-slate-300 font-semibold">All Monitored Acoustic Signals Normal</p>
@@ -45,7 +56,7 @@ export const ExplainabilityPanel = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {contributingSignals.map((signal, idx) => (
+          {formattedSignals.map((signal, idx) => (
             <div
               key={idx}
               className="bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 rounded-lg p-3.5 transition"

@@ -60,10 +60,14 @@ export const Landing = () => {
       };
     }
 
-    if (isDemoMode) {
-      await startCall(dest, true);
-    } else {
-      await startRealCall(dest, dest.id);
+    try {
+      if (isDemoMode) {
+        startCall(dest, true);
+      } else {
+        startRealCall(dest, dest.id);
+      }
+    } catch (err) {
+      console.warn('Call start error:', err);
     }
     navigate('/call');
   };
