@@ -45,6 +45,7 @@ async def websocket_telemetry(
                     await session.trigger_codeword(payload.get("codeword"))
                 elif msg_type == "transcript":
                     text = payload.get("text", "")
+                    logger.info(f"Call '{effective_call_id}': Spoken transcript received: '{text}'")
                     await session.handle_transcript(text)
                 elif msg_type == "start_calibration":
                     session.start_calibration()

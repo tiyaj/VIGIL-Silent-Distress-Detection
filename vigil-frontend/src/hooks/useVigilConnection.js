@@ -50,7 +50,20 @@ export function useVigilConnection() {
       call.addEvent?.('Connected to monitoring server. Commencing 15s baseline calibration.', 'info');
 
       // Start real-time speech recognition immediately so codewords trigger instantly from second 0
-      const transcript = createTranscriptStream({ socket });
+      const transcript = createTranscriptStream({
+        socket,
+        onStatus: (status) => {
+          if (status === 'listening') {
+            call.addEvent?.('Voice speech recognition active. Say "Silver Willow" to trigger.', 'info');
+          }
+        },
+        onTranscript: (text) => {
+          call.addEvent?.(`Speech detected: "${text}"`, 'info');
+        },
+        onError: (errMessage) => {
+          call.addEvent?.(`Speech recognition notice: ${errMessage}`, 'warning');
+        },
+      });
       transcriptRef.current = transcript;
       activeTranscript = transcript;
       transcript.start();

@@ -1,68 +1,102 @@
 // src/services/speechRecognition.js
 //
 // Uses the browser's built-in Web Speech API (Chrome / WebKit) to transcribe
-// the local user's mic and relay recognized text to the backend over the
-// existing VigilSocket. Matching against configured codewords/cancel
-// phrases happens server-side.
+// the local user's microphone stream in real-time and relay recognized text
+// over the VigilSocket to the backend.
 
-export function createTranscriptStream({ socket }) {
+export function createTranscriptStream({ socket, onTranscript, onError, onStatus }) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    console.warn('[VigilTranscript] SpeechRecognition (Web Speech API) not supported in this browser. Please use Chrome.');
+    console.warn('[VigilTranscript] SpeechRecognition (Web Speech API) not supported in this browser. Please use Google Chrome.');
+    onError?.('SpeechRecognition API not supported in this browser. Please use Chrome.');
     return { start: () => {}, stop: () => {} };
   }
 
   const recognition = new SpeechRecognition();
   recognition.continuous = true;
-  recognition.interimResults = true; // Emit interim speech for immediate keyword detection without waiting for silence
+  recognition.interimResults = true; // Stream interim words immediately for zero-latency keyword spotting
+  recognition.maxAlternatives = 3;   // Check multiple acoustic hypothesis candidates
   recognition.lang = navigator.language || 'en-US';
 
-  // Track recently sent transcripts to avoid duplicate WebSocket spam on interim slices
-  let lastSentText = '';
-  let lastSentTime = 0;
+  let shouldRestart = false;
+  let restartTimer = null;
+  let lastDispatchedText = '';
+  let lastDispatchTime = 0;
+
+  recognition.onstart = () => {
+    console.log('[VigilTranscript] Speech recognition session started. Listening on mic...');
+    onStatus?.('listening');
+  };
 
   recognition.onresult = (event) => {
+    let capturedUtterance = '';
+
     for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const text = event.results[i][0].transcript.trim();
-      const now = Date.now();
-      // Send if text is non-empty and has changed or 1.5s has elapsed
-      if (text && (text.toLowerCase() !== lastSentText.toLowerCase() || now - lastSentTime > 1500)) {
-        lastSentText = text;
-        lastSentTime = now;
-        console.log(`[VigilTranscript] Speech recognized: "${text}" (isFinal: ${event.results[i].isFinal})`);
-        socket.send('transcript', { text, timestamp: now });
+      const res = event.results[i];
+      for (let j = 0; j < res.length; ++j) {
+        const text = res[j].transcript.trim();
+        if (text) {
+          capturedUtterance += (capturedUtterance ? ' ' : '') + text;
+        }
       }
+    }
+
+    const textToSend = capturedUtterance.trim();
+    const now = Date.now();
+
+    // Debounce to prevent flooding socket on same word while keeping response <100ms
+    if (textToSend && (textToSend.toLowerCase() !== lastDispatchedText.toLowerCase() || now - lastDispatchTime > 1200)) {
+      lastDispatchedText = textToSend;
+      lastDispatchTime = now;
+      console.log(`[VigilTranscript] Transcribed: "${textToSend}"`);
+      onTranscript?.(textToSend);
+      socket.send('transcript', { text: textToSend, timestamp: now });
     }
   };
 
-  recognition.onerror = (err) => {
-    if (err.error !== 'no-speech') {
-      console.warn('[VigilTranscript] SpeechRecognition error:', err.error);
+  recognition.onerror = (event) => {
+    // 'no-speech' is expected during pauses
+    if (event.error === 'no-speech') return;
+
+    console.warn('[VigilTranscript] Speech recognition error:', event.error);
+    if (event.error === 'network') {
+      onError?.('Google Speech Service network error. Check internet connection or use manual trigger.');
+    } else if (event.error === 'not-allowed') {
+      onError?.('Microphone access denied for SpeechRecognition. Allow mic permissions in Chrome.');
+    } else {
+      onError?.(`Speech recognition error: ${event.error}`);
     }
   };
 
   recognition.onend = () => {
-    if (recognition._shouldRestart) {
-      try {
-        recognition.start();
-      } catch (e) {
-        // Recognition might already be starting
-      }
+    onStatus?.('idle');
+    if (shouldRestart) {
+      clearTimeout(restartTimer);
+      // Brief delay before restart to avoid browser InvalidStateError
+      restartTimer = setTimeout(() => {
+        if (shouldRestart) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.debug('[VigilTranscript] Restart deferred:', e);
+          }
+        }
+      }, 350);
     }
   };
 
   return {
     start() {
-      recognition._shouldRestart = true;
+      shouldRestart = true;
       try {
         recognition.start();
-        console.log('[VigilTranscript] Live speech recognition listening for codewords...');
       } catch (e) {
-        console.warn('[VigilTranscript] Could not start speech recognition:', e);
+        console.warn('[VigilTranscript] Start error:', e);
       }
     },
     stop() {
-      recognition._shouldRestart = false;
+      shouldRestart = false;
+      clearTimeout(restartTimer);
       try {
         recognition.stop();
       } catch (e) {}

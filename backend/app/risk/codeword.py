@@ -24,14 +24,18 @@ class CodewordMatcher:
         if not text:
             return None
 
-        clean_text = text.lower()
+        clean_text = text.lower().strip()
+        normalized_text = re.sub(r'[^a-z0-9]', '', clean_text)
 
         if self.allow_cancellation and self.cancellation_phrase:
-            if self.cancellation_phrase.lower() in clean_text:
+            norm_cancel = re.sub(r'[^a-z0-9]', '', self.cancellation_phrase.lower())
+            if self.cancellation_phrase.lower() in clean_text or (norm_cancel and norm_cancel in normalized_text):
                 return "cancellation"
 
-        if self.distress_codeword and self.distress_codeword.lower() in clean_text:
-            return "distress"
+        if self.distress_codeword:
+            norm_distress = re.sub(r'[^a-z0-9]', '', self.distress_codeword.lower())
+            if self.distress_codeword.lower() in clean_text or (norm_distress and norm_distress in normalized_text):
+                return "distress"
 
         return None
 
