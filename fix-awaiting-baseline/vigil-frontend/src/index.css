@@ -100,6 +100,30 @@ html.dark {
 
 html { scroll-behavior: smooth; }
 
+/* Explicit selection color, opaque + theme-keyed. The previous
+   color-mix(...,transparent) version still rendered invisible text in
+   light mode (likely interacting badly with glass-panel backdrop-filter
+   layers elsewhere on the page) — using solid, non-transparent colors
+   keyed directly to the .light/.dark toggle class removes that risk
+   entirely, since there's no alpha layer left for anything to eat. */
+html.light ::selection, html:not(.dark) ::selection {
+  background: #c7c9fb !important;
+  color: #111525 !important;
+}
+html.light ::-moz-selection, html:not(.dark) ::-moz-selection {
+  background: #c7c9fb !important;
+  color: #111525 !important;
+}
+html.dark ::selection {
+  background: #4b3fa8 !important;
+  color: #f4f5fb !important;
+}
+html.dark ::-moz-selection {
+  background: #4b3fa8 !important;
+  color: #f4f5fb !important;
+}
+
+
 body { background-image: none; }
 
 .vigil-shell { position: relative; isolation: isolate; background: transparent !important; }
@@ -199,7 +223,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
 }
 .calibration-ring__inner strong { font-size: 1.25rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.calibration-ring__inner span { margin-top: 4px; font: 700 9px/1 ui-monospace, monospace; letter-spacing: .08em; color: currentColor; }
+.calibration-ring__inner span { margin-top: 4px; font: 700 13px/1 ui-monospace, monospace; letter-spacing: .08em; color: currentColor; }
 
 .animate-pulse { animation-duration: 2.4s !important; }
 .animate-ping { animation-duration: 1.8s !important; }
@@ -271,17 +295,17 @@ html.dark {
 .vigil-nav__inner { max-width: 1440px; margin:auto; height:68px; padding:0 28px; display:flex; align-items:center; gap:28px; }
 .vigil-brand { display:flex; align-items:center; gap:10px; min-width:250px; color:var(--vh-ink); text-decoration:none; }
 .vigil-brand__mark { width:34px; height:34px; display:grid; place-items:center; border:1px solid color-mix(in srgb,var(--vh-accent) 35%,var(--vh-line)); color:var(--vh-accent); background:color-mix(in srgb,var(--vh-accent) 9%,transparent); }
-.vigil-brand strong { display:block; font-size:15px; letter-spacing:.16em; line-height:1; }
-.vigil-brand small { display:block; margin-top:4px; color:var(--vh-muted); font-size:8px; letter-spacing:.12em; font-weight:700; }
+.vigil-brand strong { display:block; font-size:16px; letter-spacing:.16em; line-height:1; }
+.vigil-brand small { display:block; margin-top:4px; color:var(--vh-muted); font-size:9px; letter-spacing:.12em; font-weight:700; }
 .vigil-nav__links { display:flex; align-items:center; gap:3px; flex:1; }
-.vigil-nav__links a { position:relative; display:flex; align-items:center; gap:7px; padding:9px 11px; color:var(--vh-muted); text-decoration:none; font-size:12px; font-weight:650; transition:.2s ease; }
+.vigil-nav__links a { position:relative; display:flex; align-items:center; gap:7px; padding:9px 11px; color:var(--vh-muted); text-decoration:none; font-size:13px; font-weight:650; transition:.2s ease; }
 .vigil-nav__links a:hover { color:var(--vh-ink); }
 .vigil-nav__links a.is-active { color:var(--vh-ink); background:color-mix(in srgb,var(--vh-ink) 6%,transparent); }
 .vigil-nav__links a.is-active::after { content:""; position:absolute; left:11px; right:11px; bottom:0; height:2px; background:var(--vh-accent); }
 .vigil-nav__links i { width:5px; height:5px; border-radius:50%; background:#2ed6a2; box-shadow:0 0 0 4px color-mix(in srgb,#2ed6a2 13%,transparent); }
 .vigil-nav__actions { display:flex; align-items:center; gap:7px; }
-.vigil-nav__alert { color:var(--vh-danger); font-size:9px; font-weight:800; letter-spacing:.08em; }
-.vigil-nav__mode,.vigil-nav__theme { border:1px solid var(--vh-line); background:transparent; color:var(--vh-muted); height:32px; padding:0 10px; font-size:10px; font-weight:800; letter-spacing:.08em; cursor:pointer; }
+.vigil-nav__alert { color:var(--vh-danger); font-size:10px; font-weight:800; letter-spacing:.08em; }
+.vigil-nav__mode,.vigil-nav__theme { border:1px solid var(--vh-line); background:transparent; color:var(--vh-muted); height:32px; padding:0 10px; font-size:11px; font-weight:800; letter-spacing:.08em; cursor:pointer; }
 .vigil-nav__mode { display:flex; align-items:center; gap:7px; }
 .vigil-nav__mode span { width:5px; height:5px; border-radius:50%; background:currentColor; }
 .vigil-nav__mode.is-live { color:var(--vh-good); }
@@ -292,14 +316,14 @@ html.dark {
 .vigil-home__grid { position:fixed; inset:68px 0 0; pointer-events:none; opacity:.34; z-index:-1; background-image:linear-gradient(var(--vh-line) 1px,transparent 1px),linear-gradient(90deg,var(--vh-line) 1px,transparent 1px); background-size:56px 56px; mask-image:linear-gradient(to bottom,black,transparent 74%); }
 .vigil-hero { min-height:310px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); border-bottom:1px solid var(--vh-line); align-items:center; }
 .vigil-hero__copy { padding:25px 0 38px; }
-.vigil-kicker,.vigil-eyebrow { color:var(--vh-muted); font-size:9px; font-weight:800; letter-spacing:.16em; }
+.vigil-kicker,.vigil-eyebrow { color:var(--vh-muted); font-size:10px; font-weight:800; letter-spacing:.16em; }
 .vigil-kicker { display:flex; align-items:center; gap:9px; }
 .vigil-kicker__dot { width:6px; height:6px; background:var(--vh-accent); border-radius:50%; box-shadow:0 0 0 5px color-mix(in srgb,var(--vh-accent) 12%,transparent); }
 .vigil-kicker__version { padding-left:8px; border-left:1px solid var(--vh-line); }
-.vigil-hero h1 { max-width:760px; margin:17px 0 14px; font-size:clamp(45px,6vw,82px); line-height:.92; letter-spacing:-.065em; font-weight:760; }
+.vigil-hero h1 { max-width:760px; margin:17px 0 14px; font-size:clamp(50px,6vw,90px); line-height:.92; letter-spacing:-.065em; font-weight:760; }
 .vigil-hero h1 span { display:block; color:var(--vh-accent); }
-.vigil-hero__copy > p { max-width:610px; color:var(--vh-muted); font-size:14px; line-height:1.7; }
-.vigil-hero__meta { display:flex; flex-wrap:wrap; gap:17px; margin-top:24px; color:var(--vh-muted); font-size:10px; font-weight:700; }
+.vigil-hero__copy > p { max-width:610px; color:var(--vh-muted); font-size:15px; line-height:1.7; }
+.vigil-hero__meta { display:flex; flex-wrap:wrap; gap:17px; margin-top:24px; color:var(--vh-muted); font-size:11px; font-weight:700; }
 .vigil-hero__meta span { display:flex; align-items:center; gap:6px; }
 .vigil-signal { justify-self:end; width:300px; height:300px; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; }
 .vigil-signal__orb { width:190px; height:190px; position:relative; display:grid; place-items:center; }
@@ -309,7 +333,7 @@ html.dark {
 .vigil-signal__core { width:66px; height:66px; border-radius:50%; display:grid; place-items:center; color:var(--vh-accent); background:color-mix(in srgb,var(--vh-accent) 10%,var(--vh-bg)); border:1px solid color-mix(in srgb,var(--vh-accent) 35%,var(--vh-line)); box-shadow:0 0 55px color-mix(in srgb,var(--vh-accent) 20%,transparent); z-index:2; }
 .vigil-signal__pulse { position:absolute; width:20px; height:20px; border-radius:50%; background:var(--vh-accent); opacity:.18; animation:vigil-pulse 2.5s ease-out infinite; }
 .vigil-signal__label { text-align:center; margin-top:-5px; }
-.vigil-signal__label span,.vigil-signal__label strong { display:block; font-size:9px; letter-spacing:.15em; }
+.vigil-signal__label span,.vigil-signal__label strong { display:block; font-size:10px; letter-spacing:.15em; }
 .vigil-signal__label span { color:var(--vh-muted); }
 .vigil-signal__label strong { margin-top:5px; color:var(--vh-accent); }
 
@@ -317,52 +341,52 @@ html.dark {
 .vigil-command__main { padding:32px 38px 38px 0; border-right:1px solid var(--vh-line); }
 .vigil-command__rail { padding:32px 0 38px 32px; }
 .vigil-section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:27px; }
-.vigil-section-head h2 { margin:7px 0 0; font-size:27px; letter-spacing:-.04em; }
-.vigil-mode { display:flex; align-items:center; gap:8px; border:1px solid var(--vh-line); background:transparent; padding:8px 10px; color:var(--vh-muted); cursor:pointer; font-size:9px; font-weight:800; letter-spacing:.07em; }
+.vigil-section-head h2 { margin:7px 0 0; font-size:30px; letter-spacing:-.04em; }
+.vigil-mode { display:flex; align-items:center; gap:8px; border:1px solid var(--vh-line); background:transparent; padding:8px 10px; color:var(--vh-muted); cursor:pointer; font-size:10px; font-weight:800; letter-spacing:.07em; }
 .vigil-mode span:first-child { color:var(--vh-ink); }
 .vigil-mode.is-demo span:first-child { color:#c98922; }
 .vigil-mode.is-live span:first-child { color:var(--vh-good); }
 .vigil-switch { display:inline-flex; border-bottom:1px solid var(--vh-line); margin-bottom:17px; }
-.vigil-switch button { border:0; background:transparent; padding:9px 15px 10px 0; margin-right:15px; display:flex; gap:7px; align-items:center; color:var(--vh-muted); font-size:11px; font-weight:750; cursor:pointer; }
+.vigil-switch button { border:0; background:transparent; padding:9px 15px 10px 0; margin-right:15px; display:flex; gap:7px; align-items:center; color:var(--vh-muted); font-size:12px; font-weight:750; cursor:pointer; }
 .vigil-switch button.is-active { color:var(--vh-ink); position:relative; }
 .vigil-switch button.is-active::after { content:""; position:absolute; bottom:-1px; left:0; width:100%; height:2px; background:var(--vh-accent); }
 .vigil-contacts { border-top:1px solid var(--vh-line); }
 .vigil-contact { min-height:75px; display:grid; grid-template-columns:34px 42px minmax(0,1fr) auto 24px; gap:12px; align-items:center; border-bottom:1px solid var(--vh-line); cursor:pointer; transition:.2s ease; }
 .vigil-contact:hover { background:color-mix(in srgb,var(--vh-accent) 3%,transparent); padding-left:5px; }
 .vigil-contact input { position:absolute; opacity:0; pointer-events:none; }
-.vigil-contact__index { color:var(--vh-muted); font:700 9px ui-monospace,monospace; }
+.vigil-contact__index { color:var(--vh-muted); font:700 13px ui-monospace,monospace; }
 .vigil-contact img { width:36px; height:36px; object-fit:cover; border-radius:50%; filter:saturate(.78); }
-.vigil-contact__body strong { display:block; font-size:13px; }
-.vigil-contact__body small { display:block; margin-top:4px; color:var(--vh-muted); font:500 10px ui-monospace,monospace; }
-.vigil-contact__tag { color:var(--vh-muted); font-size:8px; font-weight:800; letter-spacing:.12em; }
+.vigil-contact__body strong { display:block; font-size:14px; }
+.vigil-contact__body small { display:block; margin-top:4px; color:var(--vh-muted); font:500 14px ui-monospace,monospace; }
+.vigil-contact__tag { color:var(--vh-muted); font-size:9px; font-weight:800; letter-spacing:.12em; }
 .vigil-contact__check { width:20px; height:20px; display:grid; place-items:center; border:1px solid var(--vh-line); color:transparent; }
 .vigil-contact.is-selected .vigil-contact__check { color:var(--vh-bg); background:var(--vh-accent); border-color:var(--vh-accent); }
 .vigil-contact.is-selected .vigil-contact__body strong { color:var(--vh-accent); }
 .vigil-direct { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:12px 0 28px; border-top:1px solid var(--vh-line); }
 .vigil-direct label { display:block; }
-.vigil-direct label > span { display:block; margin-bottom:8px; color:var(--vh-muted); font-size:9px; font-weight:800; letter-spacing:.13em; }
+.vigil-direct label > span { display:block; margin-bottom:8px; color:var(--vh-muted); font-size:10px; font-weight:800; letter-spacing:.13em; }
 .vigil-direct em { font-style:normal; opacity:.55; }
-.vigil-direct input { width:100%; border:0; border-bottom:1px solid var(--vh-line); background:transparent; color:var(--vh-ink); padding:10px 0; outline:none; font-size:14px; }
+.vigil-direct input { width:100%; border:0; border-bottom:1px solid var(--vh-line); background:transparent; color:var(--vh-ink); padding:10px 0; outline:none; font-size:15px; }
 .vigil-direct input:focus { border-color:var(--vh-accent); }
-.vigil-error { margin:10px 0; padding:10px 12px; border-left:2px solid var(--vh-danger); color:var(--vh-danger); background:color-mix(in srgb,var(--vh-danger) 7%,transparent); font-size:11px; }
+.vigil-error { margin:10px 0; padding:10px 12px; border-left:2px solid var(--vh-danger); color:var(--vh-danger); background:color-mix(in srgb,var(--vh-danger) 7%,transparent); font-size:12px; }
 .vigil-launch { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-top:24px; }
-.vigil-launch__status { display:flex; align-items:center; gap:7px; font-size:9px; font-weight:850; letter-spacing:.1em; color:var(--vh-good); }
+.vigil-launch__status { display:flex; align-items:center; gap:7px; font-size:10px; font-weight:850; letter-spacing:.1em; color:var(--vh-good); }
 .vigil-launch__status > span { width:6px; height:6px; border-radius:50%; background:var(--vh-good); box-shadow:0 0 0 5px color-mix(in srgb,var(--vh-good) 11%,transparent); }
-.vigil-launch small { display:block; margin-top:7px; color:var(--vh-muted); font:500 10px ui-monospace,monospace; }
-.vigil-launch button { border:0; display:flex; align-items:center; gap:22px; padding:14px 17px 14px 19px; background:var(--vh-ink); color:var(--vh-bg); font-size:11px; font-weight:800; cursor:pointer; transition:.2s ease; }
+.vigil-launch small { display:block; margin-top:7px; color:var(--vh-muted); font:500 14px ui-monospace,monospace; }
+.vigil-launch button { border:0; display:flex; align-items:center; gap:22px; padding:14px 17px 14px 19px; background:var(--vh-ink); color:var(--vh-bg); font-size:12px; font-weight:800; cursor:pointer; transition:.2s ease; }
 .vigil-launch button:hover { background:var(--vh-accent); transform:translateY(-2px); }
 .vigil-rail-head { display:flex; justify-content:space-between; align-items:center; color:var(--vh-accent); }
 .vigil-protocol { margin-top:27px; }
 .vigil-protocol__item { display:grid; grid-template-columns:30px 1fr; gap:11px; padding:0 0 22px; position:relative; }
 .vigil-protocol__item:not(:last-child)::after { content:""; position:absolute; left:4px; top:17px; bottom:0; width:1px; background:var(--vh-line); }
-.vigil-protocol__item > span { width:9px; height:9px; margin-top:3px; border:1px solid var(--vh-accent); border-radius:50%; color:transparent; background:var(--vh-bg); z-index:1; }
-.vigil-protocol__item strong { font-size:12px; }
-.vigil-protocol__item p { margin:5px 0 0; color:var(--vh-muted); font-size:10px; line-height:1.6; }
+.vigil-protocol__item > span { width:9px; height:9px; margin-top:3px; border:1px solid var(--vh-accent); border-radius:50%; color:transparent; background:var(--vh-bg); z-index:1; display:flex; align-items:center; justify-content:center; font-size:0; transition: width .3s cubic-bezier(.34,1.56,.64,1), height .3s cubic-bezier(.34,1.56,.64,1), font-size .3s ease, color .25s ease, background-color .25s ease; }
+.vigil-protocol__item strong { font-size:13px; }
+.vigil-protocol__item p { margin:5px 0 0; color:var(--vh-muted); font-size:11px; line-height:1.6; }
 .vigil-rail-status { margin-top:15px; padding-top:17px; border-top:1px solid var(--vh-line); }
-.vigil-rail-status div { display:grid; grid-template-columns:19px 1fr auto; gap:7px; align-items:center; padding:9px 0; color:var(--vh-muted); font-size:10px; }
+.vigil-rail-status div { display:grid; grid-template-columns:19px 1fr auto; gap:7px; align-items:center; padding:9px 0; color:var(--vh-muted); font-size:11px; }
 .vigil-rail-status svg { color:var(--vh-accent); }
-.vigil-rail-status strong { color:var(--vh-ink); font-size:8px; letter-spacing:.1em; }
-.vigil-home__footer { display:flex; justify-content:space-between; gap:20px; padding:18px 0 4px; color:var(--vh-muted); font-size:8px; font-weight:750; letter-spacing:.09em; }
+.vigil-rail-status strong { color:var(--vh-ink); font-size:9px; letter-spacing:.1em; }
+.vigil-home__footer { display:flex; justify-content:space-between; gap:20px; padding:18px 0 4px; color:var(--vh-muted); font-size:9px; font-weight:750; letter-spacing:.09em; }
 
 @keyframes vigil-orbit { to { transform:rotate(360deg); } }
 @keyframes vigil-pulse { 0%{transform:scale(.7);opacity:.35} 100%{transform:scale(8);opacity:0} }
@@ -384,12 +408,12 @@ html.dark {
   .vigil-nav__inner { height:60px; gap:8px; }
   .vigil-nav__actions .vigil-nav__alert { display:none; }
   .vigil-brand__mark { width:30px; height:30px; }
-  .vigil-brand strong { font-size:13px; }
+  .vigil-brand strong { font-size:14px; }
   .vigil-nav__links { gap:0; }
   .vigil-nav__links a { padding:8px; }
   .vigil-nav__links a.is-active::after { left:8px; right:8px; }
   .vigil-hero { min-height:300px; }
-  .vigil-hero h1 { font-size:47px; }
+  .vigil-hero h1 { font-size:52px; }
   .vigil-hero__meta { gap:10px; }
   .vigil-command { margin-top:25px; }
   .vigil-command__main,.vigil-command__rail { padding-top:25px; padding-bottom:27px; }
@@ -397,7 +421,7 @@ html.dark {
   .vigil-mode { margin-top:17px; width:100%; justify-content:space-between; }
   .vigil-contact { grid-template-columns:25px 38px minmax(0,1fr) 20px; gap:8px; }
   .vigil-contact__tag { display:none; }
-  .vigil-contact__body small { font-size:9px; }
+  .vigil-contact__body small { font-size:10px; }
   .vigil-direct { grid-template-columns:1fr; }
   .vigil-launch { align-items:stretch; flex-direction:column; }
   .vigil-launch button { justify-content:space-between; }
@@ -438,9 +462,9 @@ body { background-image:none; }
 /* Shared work-page language */
 .vigil-work { max-width:1100px; margin:0 auto; color:var(--vh-ink); }
 .vigil-work__head { padding:28px 0 22px; border-bottom:1px solid var(--vh-line); }
-.vigil-work__kicker { color:var(--vh-muted); font-size:9px; font-weight:850; letter-spacing:.16em; }
-.vigil-work__title { margin:9px 0 8px; font-size:clamp(32px,5vw,56px); line-height:.96; letter-spacing:-.055em; font-weight:760; }
-.vigil-work__sub { max-width:700px; margin:0; color:var(--vh-muted); font-size:12px; line-height:1.7; }
+.vigil-work__kicker { color:var(--vh-muted); font-size:10px; font-weight:850; letter-spacing:.16em; }
+.vigil-work__title { margin:9px 0 8px; font-size:clamp(35px,5vw,62px); line-height:.96; letter-spacing:-.055em; font-weight:760; }
+.vigil-work__sub { max-width:700px; margin:0; color:var(--vh-muted); font-size:13px; line-height:1.7; }
 .vigil-work__headrow { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; }
 .vigil-work__action { flex:0 0 auto; }
 .vigil-work__rule { height:1px; background:var(--vh-line); }
@@ -448,25 +472,25 @@ body { background-image:none; }
 .vigil-strip__item { min-height:94px; padding:18px 18px 16px 0; border-right:1px solid var(--vh-line); }
 .vigil-strip__item:not(:first-child) { padding-left:18px; }
 .vigil-strip__item:last-child { border-right:0; }
-.vigil-strip__label { color:var(--vh-muted); font-size:8px; font-weight:850; letter-spacing:.12em; }
-.vigil-strip__value { display:block; margin-top:9px; font-size:25px; line-height:1; font-weight:760; letter-spacing:-.04em; }
-.vigil-strip__meta { display:block; margin-top:7px; color:var(--vh-muted); font:500 9px ui-monospace,monospace; }
+.vigil-strip__label { color:var(--vh-muted); font-size:9px; font-weight:850; letter-spacing:.12em; }
+.vigil-strip__value { display:block; margin-top:9px; font-size:28px; line-height:1; font-weight:760; letter-spacing:-.04em; }
+.vigil-strip__meta { display:block; margin-top:7px; color:var(--vh-muted); font:500 13px ui-monospace,monospace; }
 .vigil-section { padding:28px 0; border-bottom:1px solid var(--vh-line); }
 .vigil-section__head { display:flex; align-items:baseline; justify-content:space-between; gap:20px; margin-bottom:16px; }
-.vigil-section__head h2 { margin:0; font-size:15px; letter-spacing:-.02em; }
-.vigil-section__head span { color:var(--vh-muted); font:700 8px ui-monospace,monospace; letter-spacing:.12em; }
+.vigil-section__head h2 { margin:0; font-size:16px; letter-spacing:-.02em; }
+.vigil-section__head span { color:var(--vh-muted); font:700 11px ui-monospace,monospace; letter-spacing:.12em; }
 .vigil-flat { border-top:1px solid var(--vh-line); }
 .vigil-flat__row { display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:18px; align-items:center; min-height:64px; border-bottom:1px solid var(--vh-line); }
-.vigil-flat__row small { color:var(--vh-muted); font:700 8px ui-monospace,monospace; letter-spacing:.1em; }
-.vigil-flat__row strong { font-size:12px; }
-.vigil-flat__row p { margin:3px 0 0; color:var(--vh-muted); font-size:10px; line-height:1.5; }
-.vigil-flat__right { color:var(--vh-muted); font:700 9px ui-monospace,monospace; text-align:right; }
+.vigil-flat__row small { color:var(--vh-muted); font:700 11px ui-monospace,monospace; letter-spacing:.1em; }
+.vigil-flat__row strong { font-size:13px; }
+.vigil-flat__row p { margin:3px 0 0; color:var(--vh-muted); font-size:11px; line-height:1.5; }
+.vigil-flat__right { color:var(--vh-muted); font:700 13px ui-monospace,monospace; text-align:right; }
 .vigil-mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-.vigil-status { display:inline-flex; align-items:center; gap:7px; color:var(--vh-good); font-size:9px; font-weight:850; letter-spacing:.09em; }
+.vigil-status { display:inline-flex; align-items:center; gap:7px; color:var(--vh-good); font-size:10px; font-weight:850; letter-spacing:.09em; }
 .vigil-status i { width:6px; height:6px; border-radius:50%; background:currentColor; }
 .vigil-status.is-alert { color:var(--vh-danger); }
 .vigil-status.is-warn { color:var(--vh-warn); }
-.vigil-btn { border:0; background:var(--vh-ink); color:var(--vh-bg); padding:12px 15px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:9px; }
+.vigil-btn { border:0; background:var(--vh-ink); color:var(--vh-bg); padding:12px 15px; font-size:11px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:9px; }
 .vigil-btn:hover { background:var(--vh-accent); }
 .vigil-btn--ghost { color:var(--vh-ink); background:transparent; border:1px solid var(--vh-line); }
 .vigil-btn--ghost:hover { background:color-mix(in srgb,var(--vh-ink) 5%,transparent); }
@@ -476,11 +500,11 @@ body { background-image:none; }
 .vigil-call__head { padding:28px 0 18px; border-bottom:1px solid var(--vh-line); display:flex; justify-content:space-between; align-items:flex-end; gap:20px; }
 .vigil-call__identity { display:flex; align-items:center; gap:13px; }
 .vigil-call__identity img { width:42px; height:42px; border-radius:50%; object-fit:cover; filter:saturate(.75); }
-.vigil-call__identity h1 { margin:0; font-size:22px; letter-spacing:-.04em; }
-.vigil-call__identity p { margin:4px 0 0; color:var(--vh-muted); font:500 9px ui-monospace,monospace; }
+.vigil-call__identity h1 { margin:0; font-size:24px; letter-spacing:-.04em; }
+.vigil-call__identity p { margin:4px 0 0; color:var(--vh-muted); font:500 13px ui-monospace,monospace; }
 .vigil-call__timer { text-align:right; }
-.vigil-call__timer strong { display:block; font:700 25px ui-monospace,monospace; letter-spacing:-.04em; }
-.vigil-call__timer span { color:var(--vh-muted); font-size:8px; font-weight:850; letter-spacing:.12em; }
+.vigil-call__timer strong { display:block; font:700 35px ui-monospace,monospace; letter-spacing:-.04em; }
+.vigil-call__timer span { color:var(--vh-muted); font-size:9px; font-weight:850; letter-spacing:.12em; }
 .vigil-call__signal { margin:0; padding:24px 0 22px; border-bottom:1px solid var(--vh-line); }
 .vigil-call__telemetry { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; border-bottom:1px solid var(--vh-line); }
 .vigil-call__telemetry > * { border:0 !important; border-radius:0 !important; box-shadow:none !important; background:transparent !important; backdrop-filter:none !important; }
@@ -503,42 +527,42 @@ body { background-image:none; }
 .vigil-signal-list { border-top:1px solid var(--vh-line); }
 .vigil-signal-list__row { display:grid; grid-template-columns:28px 1fr 110px; gap:15px; align-items:center; min-height:72px; border-bottom:1px solid var(--vh-line); }
 .vigil-signal-list__dot { width:7px; height:7px; border-radius:50%; background:var(--vh-danger); }
-.vigil-signal-list__name { font-size:12px; font-weight:700; }
-.vigil-signal-list__detail { margin-top:4px; color:var(--vh-muted); font-size:10px; }
-.vigil-signal-list__value { text-align:right; font:700 10px ui-monospace,monospace; color:var(--vh-danger); }
+.vigil-signal-list__name { font-size:13px; font-weight:700; }
+.vigil-signal-list__detail { margin-top:4px; color:var(--vh-muted); font-size:11px; }
+.vigil-signal-list__value { text-align:right; font:700 14px ui-monospace,monospace; color:var(--vh-danger); }
 
 /* History */
 .vigil-history__search { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--vh-line); }
-.vigil-history__search input { width:100%; border:0; outline:0; background:transparent; color:var(--vh-ink); font-size:12px; }
+.vigil-history__search input { width:100%; border:0; outline:0; background:transparent; color:var(--vh-ink); font-size:13px; }
 .vigil-history__search svg { color:var(--vh-muted); }
 .vigil-history__list { border-top:1px solid var(--vh-line); }
 .vigil-history__item { display:grid; grid-template-columns:92px minmax(0,1fr) 120px; gap:18px; align-items:center; min-height:76px; border-bottom:1px solid var(--vh-line); cursor:pointer; transition:.18s ease; }
 .vigil-history__item:hover { background:color-mix(in srgb,var(--vh-ink) 3%,transparent); }
 .vigil-history__item.is-selected { box-shadow:inset 2px 0 var(--vh-accent); background:color-mix(in srgb,var(--vh-accent) 4%,transparent); }
-.vigil-history__id { color:var(--vh-muted); font:700 9px ui-monospace,monospace; }
-.vigil-history__name { font-size:12px; font-weight:700; }
-.vigil-history__meta { margin-top:4px; color:var(--vh-muted); font:500 9px ui-monospace,monospace; }
+.vigil-history__id { color:var(--vh-muted); font:700 13px ui-monospace,monospace; }
+.vigil-history__name { font-size:13px; font-weight:700; }
+.vigil-history__meta { margin-top:4px; color:var(--vh-muted); font:500 13px ui-monospace,monospace; }
 .vigil-history__score { text-align:right; }
-.vigil-history__score strong { display:block; font:700 16px ui-monospace,monospace; }
-.vigil-history__score span { color:var(--vh-muted); font:700 8px ui-monospace,monospace; }
+.vigil-history__score strong { display:block; font:700 23px ui-monospace,monospace; }
+.vigil-history__score span { color:var(--vh-muted); font:700 11px ui-monospace,monospace; }
 .vigil-audit { margin-top:28px; border-top:1px solid var(--vh-line); border-bottom:1px solid var(--vh-line); }
 .vigil-audit__hero { display:flex; justify-content:space-between; gap:20px; padding:18px 0; border-bottom:1px solid var(--vh-line); }
-.vigil-audit__hero h2 { margin:4px 0 0; font-size:18px; }
+.vigil-audit__hero h2 { margin:4px 0 0; font-size:20px; }
 .vigil-audit__score { text-align:right; }
-.vigil-audit__score strong { font:700 30px ui-monospace,monospace; color:var(--vh-danger); }
+.vigil-audit__score strong { font:700 43px ui-monospace,monospace; color:var(--vh-danger); }
 .vigil-audit__grid { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--vh-line); }
 .vigil-audit__cell { padding:15px 15px 15px 0; border-right:1px solid var(--vh-line); }
 .vigil-audit__cell:not(:first-child) { padding-left:15px; }
 .vigil-audit__cell:last-child { border-right:0; }
-.vigil-audit__cell small { color:var(--vh-muted); font:700 8px ui-monospace,monospace; }
-.vigil-audit__cell strong { display:block; margin-top:7px; font-size:11px; }
+.vigil-audit__cell small { color:var(--vh-muted); font:700 11px ui-monospace,monospace; }
+.vigil-audit__cell strong { display:block; margin-top:7px; font-size:12px; }
 .vigil-audit__signals { border-top:1px solid var(--vh-line); }
-.vigil-audit__signals div { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--vh-line); font-size:10px; }
+.vigil-audit__signals div { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--vh-line); font-size:11px; }
 
 /* Settings */
 .vigil-settings .vigil-form-sheet { border-top:1px solid var(--vh-line); border-bottom:1px solid var(--vh-line); padding:24px 0; }
 .vigil-settings .vigil-form-sheet + .vigil-form-sheet { margin-top:0; border-top:0; }
-.vigil-settings .vigil-form-sheet h3 { font-size:15px; }
+.vigil-settings .vigil-form-sheet h3 { font-size:16px; }
 .vigil-settings .vigil-form-sheet p { max-width:760px; }
 .vigil-settings .vigil-form-sheet input,
 .vigil-settings .vigil-form-sheet select { border:0 !important; border-bottom:1px solid var(--vh-line) !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; padding-left:0 !important; padding-right:0 !important; }
@@ -550,7 +574,7 @@ body { background-image:none; }
 .vigil-settings .vigil-privacy__item { padding:0 20px 0 0; margin-top:16px; border-right:1px solid var(--vh-line); }
 .vigil-settings .vigil-privacy__item + .vigil-privacy__item { padding-left:20px; }
 .vigil-settings .vigil-privacy__item:last-child { border-right:0; }
-.vigil-settings .vigil-privacy__item p { color:var(--vh-muted); font-size:10px; line-height:1.6; }
+.vigil-settings .vigil-privacy__item p { color:var(--vh-muted); font-size:11px; line-height:1.6; }
 
 /* PageHeader neutralization */
 .vigil-work .bg-sky-50, .vigil-work .dark\:bg-slate-800\/80 { background:transparent !important; }
@@ -688,10 +712,10 @@ html.light .vigil-nav__links a.is-active::after { background: #5148c8; }
 /* Main shell should feel like one document, not a stack of widgets. */
 .vigil-home { background: transparent; }
 .vigil-signal--quiet { width: 270px; height: auto; min-height: 120px; align-self: center; justify-self: end; align-items: flex-start; justify-content: center; border-left: 1px solid var(--vh-line); padding-left: 28px; }
-.vigil-signal--quiet .vigil-signal__quiet-line { display:flex; align-items:center; gap:8px; color:var(--vh-muted); font-size:9px; font-weight:800; letter-spacing:.13em; }
+.vigil-signal--quiet .vigil-signal__quiet-line { display:flex; align-items:center; gap:8px; color:var(--vh-muted); font-size:10px; font-weight:800; letter-spacing:.13em; }
 .vigil-signal--quiet .vigil-signal__quiet-line span { width:6px; height:6px; border-radius:50%; background:var(--vh-good); }
-.vigil-signal--quiet > strong { margin-top:10px; color:var(--vh-ink); font-size:18px; letter-spacing:-.02em; }
-.vigil-signal--quiet > p { margin:7px 0 0; max-width:220px; color:var(--vh-muted); font-size:10px; line-height:1.55; }
+.vigil-signal--quiet > strong { margin-top:10px; color:var(--vh-ink); font-size:20px; letter-spacing:-.02em; }
+.vigil-signal--quiet > p { margin:7px 0 0; max-width:220px; color:var(--vh-muted); font-size:11px; line-height:1.55; }
 
 .vigil-command { margin-top:28px; }
 .vigil-command__main { padding-top:26px; }
@@ -812,10 +836,10 @@ body { background:var(--vh-bg) !important; color:var(--vh-ink); }
 .vigil-nav__inner { height:72px; max-width:1320px; padding:0 30px; gap:26px; }
 .vigil-brand { min-width:245px; gap:12px; }
 .vigil-brand__mark { width:38px; height:38px; border-color:color-mix(in srgb,var(--vh-accent) 38%,var(--vh-line)); background:var(--vh-accent-soft); }
-.vigil-brand strong { font-size:16px; letter-spacing:.18em; }
-.vigil-brand small { font-size:8px; letter-spacing:.13em; }
+.vigil-brand strong { font-size:18px; letter-spacing:.18em; }
+.vigil-brand small { font-size:9px; letter-spacing:.13em; }
 .vigil-nav__links { gap:2px; }
-.vigil-nav__links a { min-height:38px; padding:9px 12px; border-left:1px solid transparent; border-right:1px solid transparent; font-size:12px; }
+.vigil-nav__links a { min-height:38px; padding:9px 12px; border-left:1px solid transparent; border-right:1px solid transparent; font-size:13px; }
 .vigil-nav__links a:hover { background:color-mix(in srgb,var(--vh-accent) 4%,transparent); }
 .vigil-nav__links a.is-active { background:color-mix(in srgb,var(--vh-accent) 7%,transparent); color:var(--vh-ink); border-left-color:var(--vh-line); border-right-color:var(--vh-line); }
 .vigil-nav__links a.is-active::after { height:2px; left:12px; right:12px; }
@@ -825,7 +849,7 @@ body { background:var(--vh-bg) !important; color:var(--vh-ink); }
 .vigil-nav__links a:nth-child(4) svg { color:#c48b35; }
 .vigil-nav__links a:nth-child(5) svg { color:#5e8f78; }
 .vigil-nav__actions { margin-left:auto; gap:10px; }
-.vigil-nav__context { color:var(--vh-muted); font-size:8px; font-weight:800; letter-spacing:.13em; padding-right:10px; border-right:1px solid var(--vh-line); }
+.vigil-nav__context { color:var(--vh-muted); font-size:9px; font-weight:800; letter-spacing:.13em; padding-right:10px; border-right:1px solid var(--vh-line); }
 .vigil-nav__mode, .vigil-nav__theme { height:34px; border-color:var(--vh-line); background:transparent; }
 .vigil-nav__theme:hover, .vigil-nav__mode:hover { border-color:var(--vh-accent); color:var(--vh-ink); background:color-mix(in srgb,var(--vh-accent) 5%,transparent); }
 
@@ -838,20 +862,20 @@ body { background:var(--vh-bg) !important; color:var(--vh-ink); }
 .vigil-home { max-width:1180px; padding:38px 28px 22px; }
 .vigil-hero { min-height:300px; grid-template-columns:minmax(0,1fr) 280px; gap:48px; }
 .vigil-hero__copy { padding:18px 0 30px; }
-.vigil-hero h1 { max-width:780px; font-size:clamp(48px,6vw,76px); line-height:.94; }
-.vigil-hero__copy > p { font-size:14px; max-width:640px; }
+.vigil-hero h1 { max-width:780px; font-size:clamp(53px,6vw,84px); line-height:.94; }
+.vigil-hero__copy > p { font-size:15px; max-width:640px; }
 .vigil-hero__meta { margin-top:26px; gap:22px; }
 .vigil-hero__meta span svg { color:var(--vh-accent); }
 .vigil-signal--quiet { width:250px; min-height:118px; padding-left:24px; border-left:2px solid var(--vh-accent); }
-.vigil-signal--quiet > strong { font-size:20px; }
+.vigil-signal--quiet > strong { font-size:22px; }
 .vigil-command { margin-top:0; }
 .vigil-command__main { padding-top:34px; }
-.vigil-section-head h2 { font-size:30px; }
+.vigil-section-head h2 { font-size:33px; }
 .vigil-contact { min-height:88px; }
 .vigil-contact:hover { padding-left:7px; }
 .vigil-contact img { width:42px; height:42px; border:1px solid var(--vh-line); filter:saturate(.9); }
-.vigil-contact__body strong { font-size:14px; }
-.vigil-contact__body small { font-size:11px; }
+.vigil-contact__body strong { font-size:15px; }
+.vigil-contact__body small { font-size:12px; }
 .vigil-contact__check { width:22px; height:22px; }
 .vigil-launch { padding:25px 0 30px; }
 .vigil-launch button { padding:15px 18px; min-height:48px; }
@@ -861,36 +885,36 @@ body { background:var(--vh-bg) !important; color:var(--vh-ink); }
 /* Shared pages: increase readability without bloating the UI. */
 .vigil-work, .vigil-call { max-width:1120px; }
 .vigil-work__head { padding:34px 0 28px; }
-.vigil-work__kicker { font-size:10px; color:var(--vh-accent); }
-.vigil-work__title { font-size:clamp(38px,5vw,60px); margin-top:12px; }
-.vigil-work__sub { font-size:13px; line-height:1.75; }
+.vigil-work__kicker { font-size:11px; color:var(--vh-accent); }
+.vigil-work__title { font-size:clamp(42px,5vw,66px); margin-top:12px; }
+.vigil-work__sub { font-size:14px; line-height:1.75; }
 .vigil-section { padding:30px 0; }
 .vigil-section__head { margin-bottom:20px; }
-.vigil-section__head h2 { font-size:17px; }
-.vigil-section__head span { font-size:9px; }
+.vigil-section__head h2 { font-size:19px; }
+.vigil-section__head span { font-size:10px; }
 .vigil-strip__item { min-height:96px; padding-top:20px; }
-.vigil-strip__value { font-size:28px; }
-.vigil-strip__meta { font-size:10px; }
+.vigil-strip__value { font-size:30px; }
+.vigil-strip__meta { font-size:11px; }
 .vigil-flat__row { min-height:70px; }
-.vigil-flat__row strong { font-size:13px; }
-.vigil-flat__row p { font-size:11px; line-height:1.6; }
+.vigil-flat__row strong { font-size:14px; }
+.vigil-flat__row p { font-size:12px; line-height:1.6; }
 .vigil-history__item { min-height:84px; }
-.vigil-history__name { font-size:13px; }
-.vigil-history__meta { font-size:10px; }
+.vigil-history__name { font-size:14px; }
+.vigil-history__meta { font-size:11px; }
 .vigil-signal-list__row { min-height:80px; }
-.vigil-signal-list__name { font-size:13px; }
-.vigil-signal-list__detail { font-size:11px; }
+.vigil-signal-list__name { font-size:14px; }
+.vigil-signal-list__detail { font-size:12px; }
 
 /* Settings: give controls more air and make the page feel finished. */
 .vigil-settings .vigil-form-sheet { padding:30px 0; }
-.vigil-settings .vigil-form-sheet h3 { font-size:16px; }
-.vigil-settings .vigil-form-sheet p { font-size:12px; line-height:1.7; }
-.vigil-settings .vigil-form-sheet label { font-size:12px; }
-.vigil-settings .vigil-form-sheet input, .vigil-settings .vigil-form-sheet select { font-size:14px !important; min-height:44px; }
+.vigil-settings .vigil-form-sheet h3 { font-size:18px; }
+.vigil-settings .vigil-form-sheet p { font-size:13px; line-height:1.7; }
+.vigil-settings .vigil-form-sheet label { font-size:13px; }
+.vigil-settings .vigil-form-sheet input, .vigil-settings .vigil-form-sheet select { font-size:15px !important; min-height:44px; }
 .vigil-settings .vigil-form-sheet button { min-height:42px; padding:10px 15px !important; background:var(--vh-accent) !important; color:#fff !important; }
 .vigil-settings .vigil-privacy { padding:30px 0; }
-.vigil-settings .vigil-privacy__item h3 { font-size:13px; margin-top:8px; }
-.vigil-settings .vigil-privacy__item p { font-size:11px; line-height:1.7; }
+.vigil-settings .vigil-privacy__item h3 { font-size:14px; margin-top:8px; }
+.vigil-settings .vigil-privacy__item p { font-size:12px; line-height:1.7; }
 
 /* More believable motion: section headers arrive first, content follows. */
 .vigil-work__head, .vigil-hero__copy, .vigil-signal--quiet { animation:vigil-rise .6s cubic-bezier(.16,1,.3,1) both; }
@@ -918,11 +942,11 @@ body { background:var(--vh-bg) !important; color:var(--vh-ink); }
   .vigil-nav { height:62px; }
   .vigil-nav__inner { height:62px; }
   .vigil-brand small { display:none; }
-  .vigil-brand strong { font-size:14px; }
+  .vigil-brand strong { font-size:15px; }
   .vigil-home { padding:24px 16px 18px; }
   .vigil-hero { min-height:0; }
-  .vigil-hero h1 { font-size:46px; }
-  .vigil-section-head h2 { font-size:25px; }
+  .vigil-hero h1 { font-size:51px; }
+  .vigil-section-head h2 { font-size:28px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -967,8 +991,8 @@ html.dark {
 .vigil-settings .vigil-privacy__item p {
   color: var(--vh-muted) !important;
 }
-.vigil-work__sub { font-size: 14px; }
-.vigil-hero__copy > p { font-size: 15px; }
+.vigil-work__sub { font-size:15px; }
+.vigil-hero__copy > p { font-size:16px; }
 .vigil-contact__body strong, .vigil-history__name, .vigil-flat__row strong { color: var(--vh-ink); }
 
 /* Remove decorative cursor-dot language completely. */
@@ -1072,7 +1096,7 @@ html.dark {
 }
 .vigil-protocol__item:hover::after { transform:scaleX(1); }
 .vigil-protocol__item > span { transition:color .25s ease; }
-.vigil-protocol__item:hover > span { color:var(--vh-accent); }
+.vigil-protocol__item:hover > span { width:22px; height:22px; font-size:10px; font-weight:800; color:var(--vh-bg); background:var(--vh-accent); }
 
 /* Status/telemetry rows have live movement on hover and state change. */
 .vigil-rail-status div,
@@ -1132,6 +1156,249 @@ html.dark {
 @keyframes vigil-icon-float { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-2px) rotate(4deg)} }
 
 @media (max-width:640px) {
-  .vigil-work__sub, .vigil-hero__copy > p { font-size:13px; }
+  .vigil-work__sub, .vigil-hero__copy > p { font-size:14px; }
   .vigil-contact { min-height:82px; }
+}
+
+/* ============================================================
+   VIGIL // ANIMATION PASS (frontend-only, purely additive)
+   ============================================================ */
+
+/* LIVE badge: breathing glow instead of a static pill */
+@keyframes vigil-live-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--vh-good) 45%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--vh-good) 0%, transparent); }
+}
+.vigil-nav__mode.is-live, [class*="live"] { animation: vigil-live-glow 2.4s ease-in-out infinite; }
+
+/* Buttons: springier hover lift instead of a flat state change */
+.vigil-launch button, .vigil-btn, button[class*="rounded"] {
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background-color .2s ease, color .2s ease;
+}
+.vigil-launch button:hover, .vigil-btn:hover, button[class*="rounded"]:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--vh-accent) 35%, transparent);
+}
+.vigil-launch button:active, .vigil-btn:active, button[class*="rounded"]:active {
+  transform: translateY(0) scale(.98);
+}
+
+/* Contact rows: slight lift + accent-tinted shadow on hover, on top of existing bg shift */
+.vigil-contact:hover { transform: translateX(2px); box-shadow: -2px 0 0 0 var(--vh-accent); }
+
+/* Risk meter: pulse harder as risk climbs — reuses existing state classes */
+@keyframes vigil-risk-pulse-elevated { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
+@keyframes vigil-risk-pulse-critical { 0%,100% { filter: brightness(1) saturate(1); transform: scale(1); } 50% { filter: brightness(1.3) saturate(1.2); transform: scale(1.03); } }
+.risk-meter--elevated .risk-meter__gauge { animation: vigil-risk-pulse-elevated 1.6s ease-in-out infinite; }
+.risk-meter--critical .risk-meter__gauge { animation: vigil-risk-pulse-critical .9s ease-in-out infinite; }
+
+/* Section headers: underline sweeps in on scroll-into-view state (data attr optional, harmless if unused) */
+.vigil-section-head h2, .vigil-work__title { position: relative; }
+
+/* Icons that accompany status text get a subtle continuous shimmer */
+@keyframes vigil-icon-drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.vigil-signal__quiet-line svg, .vigil-rail-status svg { animation: vigil-icon-drift 3s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vigil-nav__mode.is-live, [class*="live"],
+  .risk-meter--elevated .risk-meter__gauge, .risk-meter--critical .risk-meter__gauge,
+  .vigil-signal__quiet-line svg, .vigil-rail-status svg {
+    animation: none !important;
+  }
+  .vigil-launch button:hover, .vigil-btn:hover, button[class*="rounded"]:hover, .vigil-contact:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   VIGIL // NAVBAR ENHANCEMENT (frontend-only)
+   ============================================================ */
+
+/* Sticky, elevated bar with a soft border-glow instead of a flat line */
+.vigil-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 0 var(--vh-line), 0 12px 24px -18px color-mix(in srgb, var(--vh-accent) 45%, transparent);
+}
+
+/* Brand mark: gentle rotate + glow on hover, feels alive not static */
+.vigil-brand__mark { transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s ease; }
+.vigil-brand:hover .vigil-brand__mark {
+  transform: rotate(-8deg) scale(1.08);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vh-accent) 18%, transparent);
+}
+
+/* Nav links: active indicator slides instead of just appearing, hover gets a soft lift */
+.vigil-nav__links a { border-radius: 8px; }
+.vigil-nav__links a::after { transition: left .25s cubic-bezier(.34,1.56,.64,1), right .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease; opacity: 0; }
+.vigil-nav__links a.is-active::after { opacity: 1; }
+.vigil-nav__links a:hover { transform: translateY(-1px); }
+.vigil-nav__links a { transition: color .2s ease, background-color .2s ease, transform .2s ease; }
+
+/* LIVE / DEMO pill: crisper, bolder state with its own accent ring */
+.vigil-nav__mode { border-radius: 999px; transition: box-shadow .25s ease, transform .2s ease; }
+.vigil-nav__mode:hover { transform: translateY(-1px); }
+.vigil-nav__mode.is-live { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vh-good) 35%, transparent); }
+.vigil-nav__mode.is-demo { box-shadow: inset 0 0 0 1px color-mix(in srgb, #c98922 35%, transparent); }
+
+/* Theme toggle: satisfying spin on click */
+.vigil-nav__theme { border-radius: 999px; transition: transform .4s cubic-bezier(.34,1.56,.64,1), background-color .2s ease; }
+.vigil-nav__theme:hover { transform: rotate(20deg); background: color-mix(in srgb, var(--vh-accent) 8%, transparent); }
+.vigil-nav__theme:active { transform: rotate(160deg) scale(.9); }
+
+@media (prefers-reduced-motion: reduce) {
+  .vigil-brand:hover .vigil-brand__mark,
+  .vigil-nav__links a:hover,
+  .vigil-nav__mode:hover,
+  .vigil-nav__theme:hover,
+  .vigil-nav__theme:active {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   VIGIL // MINIMALIST-BUT-BOLD TOUCHES (small, frontend-only)
+   ============================================================ */
+
+/* Section eyebrows ("01/DESTINATION", "02/PROTOCOL"): accent-colored,
+   not just muted gray — gives each section a clear anchor point. */
+.vigil-eyebrow { }
+
+/* Footer meta line: a touch more weight instead of disappearing into the page */
+.vigil-home__footer, footer { }
+
+/* Status rail values (READY / ONLINE / REQUIRED) get their state color, not flat muted gray */
+.vigil-rail-status strong { }
+
+
+/* ============================================================
+   VIGIL // CONTACT REMOVE CONTROL
+   ============================================================ */
+.vigil-contact__meta { display:flex; align-items:center; gap:10px; }
+.vigil-contact__remove {
+  width:28px; height:28px; display:grid; place-items:center; padding:0;
+  border:1px solid transparent; border-radius:8px; background:transparent;
+  color:var(--vh-muted); opacity:.55; cursor:pointer;
+  transition: opacity .2s ease, color .2s ease, background-color .2s ease, border-color .2s ease;
+}
+.vigil-contact:hover .vigil-contact__remove, .vigil-contact__remove:focus-visible { opacity:1; }
+.vigil-contact__remove:hover, .vigil-contact__remove:focus-visible {
+  color:#e11d48; background:color-mix(in srgb,#e11d48 10%,transparent); border-color:color-mix(in srgb,#e11d48 30%,transparent);
+}
+.vigil-contacts__empty { padding:26px 4px; color:var(--vh-muted); border-bottom:1px solid var(--vh-line); }
+.vigil-contacts__restore {
+  margin-top:12px; padding:6px 0; border:0; background:none; cursor:pointer;
+  color:var(--vh-accent); font-weight:700; text-decoration:underline; text-underline-offset:3px;
+}
+@media (max-width: 720px) {
+  .vigil-contact { grid-template-columns:25px 38px minmax(0,1fr) auto 20px; }
+  .vigil-contact__meta .vigil-contact__tag { display:none; }
+}
+
+/* ============================================================
+   VIGIL // SETTINGS CONTACT BOOK
+   ============================================================ */
+.vigil-contactbook { list-style:none; margin:0; padding:0; border-top:1px solid var(--vh-line); }
+.vigil-contactbook__row {
+  display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:16px; align-items:center;
+  padding:14px 0; border-bottom:1px solid var(--vh-line); transition: background-color .2s ease, padding-left .2s ease;
+}
+.vigil-contactbook__row:hover { background:color-mix(in srgb,var(--vh-accent) 3%,transparent); padding-left:6px; }
+.vigil-contactbook__row.is-primary { box-shadow: inset 2px 0 0 var(--vh-accent); padding-left:12px; }
+.vigil-contactbook__who { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.vigil-contactbook__who strong { font-size:14px; color:var(--vh-ink); }
+.vigil-contactbook__who small { font-size:12px; color:var(--vh-muted); font-family:ui-monospace,monospace; overflow-wrap:anywhere; }
+.vigil-contactbook__badge {
+  padding:4px 8px; font-size:11px; font-weight:800; letter-spacing:.08em;
+  color:var(--vh-good); border:1px solid color-mix(in srgb,var(--vh-good) 40%,transparent);
+}
+.vigil-contactbook__link {
+  border:0; background:none; padding:0; cursor:pointer; font-size:12px; font-weight:700;
+  color:var(--vh-accent); text-decoration:underline; text-underline-offset:3px;
+}
+.vigil-contactbook__actions { display:flex; gap:6px; }
+.vigil-contactbook__actions button {
+  width:30px; height:30px; display:grid; place-items:center; padding:0; cursor:pointer;
+  color:var(--vh-muted); border:1px solid var(--vh-line) !important; background:transparent;
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease;
+}
+.vigil-contactbook__actions button:hover:not(:disabled) { color:var(--vh-accent); border-color:var(--vh-accent) !important; }
+.vigil-contactbook__actions button.is-danger:hover:not(:disabled) { color:#e11d48; border-color:#e11d48 !important; background:color-mix(in srgb,#e11d48 8%,transparent); }
+.vigil-contactbook__actions button:disabled { opacity:.35; cursor:not-allowed; }
+.vigil-contactbook__formtitle { display:flex; align-items:center; gap:8px; margin:0; font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--vh-ink); }
+@media (max-width: 720px) {
+  .vigil-contactbook__row { grid-template-columns:minmax(0,1fr) auto; }
+  .vigil-contactbook__badge, .vigil-contactbook__row > .vigil-contactbook__link { grid-column:1; justify-self:start; }
+}
+
+/* ============================================================
+   VIGIL // SETTINGS CONTACT ROWS: fix + centre
+   The generic ".vigil-settings .vigil-form-sheet button" rule paints every
+   button solid accent with 42px min-height; that swallowed the contact-row
+   controls. These higher-specificity rules restore them and centre content.
+   ============================================================ */
+.vigil-contactbook__row { align-items:center; }
+.vigil-settings .vigil-form-sheet .vigil-contactbook__actions { align-items:center; }
+.vigil-settings .vigil-form-sheet .vigil-contactbook__actions button {
+  width:34px; height:34px; min-height:0 !important; padding:0 !important;
+  display:inline-grid; place-items:center;
+  background:transparent !important; color:var(--vh-muted) !important;
+}
+.vigil-settings .vigil-form-sheet .vigil-contactbook__actions button:hover:not(:disabled) {
+  color:var(--vh-accent) !important; background:color-mix(in srgb,var(--vh-accent) 8%,transparent) !important;
+}
+.vigil-settings .vigil-form-sheet .vigil-contactbook__actions button.is-danger:hover:not(:disabled) {
+  color:#e11d48 !important; background:color-mix(in srgb,#e11d48 8%,transparent) !important;
+}
+.vigil-settings .vigil-form-sheet .vigil-contactbook__actions button:disabled { transform:none; filter:none; }
+.vigil-settings .vigil-form-sheet .vigil-contactbook__link {
+  min-height:0 !important; padding:0 !important; background:none !important; color:var(--vh-accent) !important;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.vigil-contactbook__badge { display:inline-flex; align-items:center; justify-content:center; }
+.vigil-contactbook__formtitle { align-items:center; }
+
+/* ============================================================
+   VIGIL // HERO BACKGROUND + SCROLL EFFECTS
+   ============================================================ */
+.vigil-hero { position:relative; isolation:isolate; }
+.vigil-hero > *:not(.vigil-hero__fx) { position:relative; z-index:1; }
+.vigil-hero__fx {
+  position:absolute; inset:-30px 0 -10px 0; z-index:0; pointer-events:none;
+  /* strongest on the right (behind the signal panel), fading out over the headline */
+  -webkit-mask-image: radial-gradient(ellipse 80% 120% at 88% 40%, #000 0%, rgba(0,0,0,.5) 45%, transparent 78%);
+          mask-image: radial-gradient(ellipse 80% 120% at 88% 40%, #000 0%, rgba(0,0,0,.5) 45%, transparent 78%);
+}
+
+/* Progressive enhancement: scroll-driven animations (Chromium). Browsers
+   without support just show everything statically. */
+@keyframes vigil-scroll-in { from { opacity:0; translate:0 22px; } to { opacity:1; translate:0 0; } }
+@keyframes vigil-fx-drift { from { translate:0 0; opacity:1; } to { translate:0 -70px; opacity:.15; } }
+@keyframes vigil-progress { from { scale:0 1; } to { scale:1 1; } }
+
+@supports (animation-timeline: view()) {
+  .vigil-protocol__item, .vigil-flat__row, .vigil-contactbook__row, .vigil-privacy__item, .vigil-contact {
+    animation: vigil-scroll-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+  .vigil-hero__fx {
+    animation: vigil-fx-drift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 70vh;
+  }
+  .vigil-nav::after {
+    content:''; position:absolute; left:0; bottom:0; width:100%; height:2px;
+    background:linear-gradient(90deg,var(--vh-accent),var(--vh-accent-2));
+    transform-origin:left center;
+    animation: vigil-progress linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vigil-protocol__item, .vigil-flat__row, .vigil-contactbook__row, .vigil-privacy__item, .vigil-contact,
+  .vigil-hero__fx, .vigil-nav::after { animation:none !important; }
 }

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCall } from '../context/CallContext';
 import { useVigilConnection } from '../hooks/useVigilConnection';
+import { useTheme } from '../context/ThemeContext';
+import MoltenMetal from '../components/common/MoltenMetal';
 import {
   ArrowUpRight,
   Check,
@@ -13,13 +15,32 @@ import {
   Server,
   ShieldCheck,
   Sparkles,
+  Trash2,
   UserRound,
   Wifi,
 } from 'lucide-react';
 
+// The hero background needs WebGL2 and is skipped for reduced-motion users.
+// Checked once; if unsupported the hero simply renders without it (no crash).
+let fxSupported;
+const canShowHeroFx = () => {
+  if (fxSupported !== undefined) return fxSupported;
+  try {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gl = document.createElement('canvas').getContext('webgl2');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    fxSupported = !reduce && !!gl;
+  } catch {
+    fxSupported = false;
+  }
+  return fxSupported;
+};
+
 export const Landing = () => {
+  const { isDark } = useTheme();
+  const showFx = canShowHeroFx();
   const navigate = useNavigate();
-  const { startCall, isDemoMode, setIsDemoMode } = useCall();
+  const { startCall, isDemoMode, setIsDemoMode, contacts, primaryContactId } = useCall();
   const { startRealCall } = useVigilConnection();
 
   const [recipientType, setRecipientType] = useState('preset');
@@ -28,34 +49,74 @@ export const Landing = () => {
   const [customNumber, setCustomNumber] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const presets = [
-    {
-      id: '1',
-      name: 'Priya Sharma',
-      number: '+91 98765 43210',
-      role: 'Peer contact',
-      avatar: 'https://images.unsplash.com/photo-1759840278511-f73a3d62fb9f?auto=format&fit=crop&w=320&h=320&q=82',
-      tag: 'PERSONAL',
-    },
-    {
-      id: '2',
-      name: 'Local PCR Helpline',
-      number: '+91 78901 23456',
-      role: 'Workplace operations',
-      avatar: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?auto=format&fit=crop&w=320&h=320&q=82',
-      tag: 'OPERATIONS',
-    },
-    {
-      id: '3',
-      name: 'Auto Rickshaw Stand',
-      number: '+91 88990 12345',
-      role: 'Transit service',
-      avatar: 'https://images.unsplash.com/photo-1546886392-83ca77425060?auto=format&fit=crop&w=320&h=320&q=82',
-      tag: 'TRANSIT',
-    },
-  ];
+  // Every contact from the Settings contact book, alert recipient first, then
+  // the two static presets. Ids come from the phone number so they match on
+  // every device (the id doubles as the call-room id).
+  const presets = useMemo(() => {
+    const avatarFor = (name) => {
+      if (name === 'Priya Sharma') {
+        return 'https://images.unsplash.com/photo-1759840278511-f73a3d62fb9f?auto=format&fit=crop&w=320&h=320&q=82';
+      }
+      const initials = (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+      return `data:image/svg+xml;utf8,${encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><rect width='160' height='160' fill='#5b5cf0'/><text x='80' y='102' font-family='Inter,Arial,sans-serif' font-size='64' font-weight='700' fill='white' text-anchor='middle'>${initials}</text></svg>`
+      )}`;
+    };
+    const fromBook = [...contacts]
+      .sort((a, b) => (b.id === primaryContactId) - (a.id === primaryContactId))
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        number: c.phone,
+        role: c.relationship || 'Contact',
+        avatar: avatarFor(c.name),
+        tag: c.id === primaryContactId ? 'TRUSTED' : (c.relationship || 'CONTACT').toUpperCase(),
+      }));
+    return [
+      ...fromBook,
+      {
+        id: '2',
+        name: 'Local PCR Helpline',
+        number: '+91 78901 23456',
+        role: 'Workplace operations',
+        avatar: 'https://images.unsplash.com/photo-1649433658557-54cf58577c68?auto=format&fit=crop&w=320&h=320&q=82',
+        tag: 'OPERATIONS',
+      },
+      {
+        id: '3',
+        name: 'Auto Rickshaw Stand',
+        number: '+91 88990 12345',
+        role: 'Transit service',
+        avatar: 'https://images.unsplash.com/photo-1546886392-83ca77425060?auto=format&fit=crop&w=320&h=320&q=82',
+        tag: 'TRANSIT',
+      },
+    ];
+  }, [contacts, primaryContactId]);
 
-  const selected = presets.find((p) => p.id === selectedPreset);
+  // Removed contacts are remembered per-browser. Each removal is stored with
+  // the contact's name|number, so if the underlying contact changes (e.g. you
+  // save a new trusted contact in Settings) it automatically reappears.
+  const sigOf = (c) => `${c.name}|${c.number}`;
+  const [hidden, setHidden] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('vigil_hidden_contacts') || '{}'); }
+    catch { return {}; }
+  });
+  const persistHidden = (next) => {
+    setHidden(next);
+    try { localStorage.setItem('vigil_hidden_contacts', JSON.stringify(next)); } catch { /* storage unavailable */ }
+  };
+  const visiblePresets = presets.filter((c) => hidden[c.id] !== sigOf(c));
+  const activeId = visiblePresets.some((c) => c.id === selectedPreset) ? selectedPreset : visiblePresets[0]?.id;
+  const removedCount = presets.length - visiblePresets.length;
+
+  const handleRemove = (e, contact) => {
+    e.preventDefault();
+    e.stopPropagation();
+    persistHidden({ ...hidden, [contact.id]: sigOf(contact) });
+  };
+  const handleRestore = () => persistHidden({});
+
+  const selected = visiblePresets.find((p) => p.id === activeId);
 
   const handleStartCall = async (e) => {
     e.preventDefault();
@@ -63,6 +124,10 @@ export const Landing = () => {
 
     let dest;
     if (recipientType === 'preset') {
+      if (!selected) {
+        setErrorMsg('No contact selected. Pick a contact, restore removed ones, or use Direct dial.');
+        return;
+      }
       dest = selected;
     } else {
       if (!customNumber.trim()) {
@@ -89,6 +154,25 @@ export const Landing = () => {
   return (
     <div className="vigil-home">
       <section className="vigil-hero">
+        {showFx && (
+          <div className="vigil-hero__fx" aria-hidden="true">
+            <MoltenMetal
+              lightMode={!isDark}
+              backgroundColor="#f7f8fc"
+              color1={isDark ? '#2e2a9c' : '#c9cbfb'}
+              color2={isDark ? '#8b8cff' : '#8b8cf5'}
+              color3={isDark ? '#d9d6ff' : '#5b5cf0'}
+              speed={0.22}
+              scale={3}
+              detail={3}
+              glow={1.4}
+              brightness={isDark ? 1.05 : 1.2}
+              opacity={isDark ? 0.6 : 0.6}
+              grainIntensity={0.04}
+              mouseInteraction={false}
+            />
+          </div>
+        )}
         <div className="vigil-hero__copy">
           <div className="vigil-kicker">
             NON-VERBAL DISTRESS MONITOR
@@ -156,15 +240,15 @@ export const Landing = () => {
           <form onSubmit={handleStartCall}>
             {recipientType === 'preset' ? (
               <div className="vigil-contacts">
-                {presets.map((preset, index) => (
+                {visiblePresets.map((preset, index) => (
                   <label
                     key={preset.id}
-                    className={`vigil-contact ${selectedPreset === preset.id ? 'is-selected' : ''}`}
+                    className={`vigil-contact ${activeId === preset.id ? 'is-selected' : ''}`}
                   >
                     <input
                       type="radio"
                       name="preset"
-                      checked={selectedPreset === preset.id}
+                      checked={activeId === preset.id}
                       onChange={() => setSelectedPreset(preset.id)}
                     />
                     <span className="vigil-contact__index">0{index + 1}</span>
@@ -173,10 +257,29 @@ export const Landing = () => {
                       <strong>{preset.name}</strong>
                       <small>{preset.number} · {preset.role}</small>
                     </span>
-                    <span className="vigil-contact__tag">{preset.tag}</span>
+                    <span className="vigil-contact__meta">
+                      <span className="vigil-contact__tag">{preset.tag}</span>
+                      <button
+                        type="button"
+                        className="vigil-contact__remove"
+                        onClick={(e) => handleRemove(e, preset)}
+                        aria-label={`Remove ${preset.name} from this list`}
+                        title="Remove from list"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </span>
                     <span className="vigil-contact__check"><Check size={14} /></span>
                   </label>
                 ))}
+                {visiblePresets.length === 0 && (
+                  <div className="vigil-contacts__empty">No contacts in this list. Restore them or use Direct dial.</div>
+                )}
+                {removedCount > 0 && (
+                  <button type="button" className="vigil-contacts__restore" onClick={handleRestore}>
+                    Restore {removedCount} removed contact{removedCount > 1 ? 's' : ''}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="vigil-direct">
@@ -205,7 +308,7 @@ export const Landing = () => {
             <div className="vigil-launch">
               <div>
                 <span className="vigil-launch__status"><span /> READY TO CONNECT</span>
-                <small>{recipientType === 'preset' ? `${selected?.name} · ${selected?.number}` : customNumber || 'Awaiting destination'}</small>
+                <small>{recipientType === 'preset' ? (selected ? `${selected.name} · ${selected.number}` : 'No contact selected') : customNumber || 'Awaiting destination'}</small>
               </div>
               <button type="submit">
                 <span>Start monitored call</span>

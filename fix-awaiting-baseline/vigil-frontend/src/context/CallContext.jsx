@@ -1,6 +1,33 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { api } from '../services/api';
 
 const CallContext = createContext(null);
+
+// ---- Contact book helpers -------------------------------------------------
+// The backend stores exactly ONE alert recipient (the "trusted contact"). The
+// contact book below is a frontend-side list of everyone the user has added;
+// one entry is the alert recipient and is synced to the backend.
+// Ids are derived from the phone number so they are identical on every
+// device/tab (call rooms are keyed by this id).
+const CONTACTS_KEY = 'vigil_contacts';
+const digitsOf = (phone) => (phone || '').replace(/\D/g, '');
+export const contactIdFor = (phone) => `c_${digitsOf(phone)}`;
+const toContact = (c) => ({
+  id: contactIdFor(c.phone),
+  name: (c.name || '').trim(),
+  phone: (c.phone || '').trim(),
+  relationship: c.relationship || 'Family Member',
+  autoSms: c.autoSms ?? true,
+  pushNotification: c.pushNotification ?? true,
+});
+const loadStoredContacts = () => {
+  try {
+    const arr = JSON.parse(localStorage.getItem(CONTACTS_KEY) || 'null');
+    return Array.isArray(arr) && arr.length ? arr : null;
+  } catch {
+    return null;
+  }
+};
 
 export const CallProvider = ({ children }) => {
   // Navigation / Mode (Default to Live Mode for real backend monitoring)
@@ -20,6 +47,41 @@ export const CallProvider = ({ children }) => {
     cancellationPhrase: 'Sab Theek Hai',
     allowCancellation: true,
   });
+
+  // Contact book (see helpers above). Seeded with the default recipient until
+  // the backend answers.
+  const storedContactsRef = useRef(loadStoredContacts());
+  const [contacts, setContacts] = useState(
+    () => storedContactsRef.current || [toContact({ name: 'Priya Sharma', phone: '+91 98765 43210', relationship: 'Family Member' })]
+  );
+  useEffect(() => {
+    try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts)); } catch { /* storage unavailable */ }
+  }, [contacts]);
+  const primaryContactId = contactIdFor(trustedContact.phone);
+
+  // Load persisted settings once at app start so every page (Start, Call,
+  // Dashboard) sees the saved trusted contact / codewords — not just Settings.
+  useEffect(() => {
+    api.getSettings()
+      .then((data) => {
+        if (data?.trustedContact) {
+          const tc = data.trustedContact;
+          setTrustedContact(tc);
+          const c = toContact(tc);
+          setContacts((prev) => {
+            if (!storedContactsRef.current) return [c]; // first run: replace the seed
+            return prev.some((x) => x.id === c.id) ? prev : [...prev, c];
+          });
+        }
+        if (data?.codewords) {
+          setCodewords({
+            ...data.codewords,
+            distressCodeword: data.codewords.distressCodeword === 'Chai Garam' ? 'Chai' : data.codewords.distressCodeword,
+          });
+        }
+      })
+      .catch((err) => console.warn('Could not hydrate settings from backend:', err));
+  }, []);
 
   // Call Lifecycle: 'idle' | 'dialing' | 'permission_prompt' | 'permission_denied' | 'connecting' | 'calibrating' | 'monitoring' | 'ended'
   const [callState, setCallState] = useState('idle');
@@ -343,6 +405,51 @@ export const CallProvider = ({ children }) => {
     addEvent('Risk score recalibrated to normal baseline.', 'info');
   };
 
+  // Make a contact the alert recipient: updates shared state and the backend.
+  const setPrimaryContact = async (c) => {
+    const tc = {
+      name: c.name,
+      phone: c.phone,
+      relationship: c.relationship,
+      autoSms: c.autoSms,
+      pushNotification: c.pushNotification,
+    };
+    setTrustedContact(tc);
+    try {
+      await api.saveTrustedContact(tc);
+    } catch (err) {
+      console.warn('Backend save failed:', err);
+    }
+  };
+
+  const addContact = async (data, makePrimary = false) => {
+    const c = toContact(data);
+    if (!c.name) return { ok: false, error: 'Enter a name.' };
+    if (!digitsOf(c.phone)) return { ok: false, error: 'Enter a valid phone number.' };
+    if (contacts.some((x) => x.id === c.id)) return { ok: false, error: `${c.phone} is already in your contacts.` };
+    setContacts((prev) => [...prev, c]);
+    if (makePrimary || contacts.length === 0) await setPrimaryContact(c);
+    return { ok: true };
+  };
+
+  const updateContact = async (oldId, data) => {
+    const c = toContact(data);
+    if (!c.name) return { ok: false, error: 'Enter a name.' };
+    if (!digitsOf(c.phone)) return { ok: false, error: 'Enter a valid phone number.' };
+    if (c.id !== oldId && contacts.some((x) => x.id === c.id)) return { ok: false, error: `${c.phone} is already in your contacts.` };
+    setContacts((prev) => prev.map((x) => (x.id === oldId ? c : x)));
+    if (oldId === primaryContactId) await setPrimaryContact(c);
+    return { ok: true };
+  };
+
+  const removeContact = (id) => {
+    if (id === primaryContactId) {
+      return { ok: false, error: 'This contact receives alerts. Make another contact the recipient first.' };
+    }
+    setContacts((prev) => prev.filter((x) => x.id !== id));
+    return { ok: true };
+  };
+
   return (
     <CallContext.Provider
       value={{
@@ -350,6 +457,12 @@ export const CallProvider = ({ children }) => {
         setIsDemoMode,
         trustedContact,
         setTrustedContact,
+        contacts,
+        primaryContactId,
+        addContact,
+        updateContact,
+        removeContact,
+        setPrimaryContact,
         codewords,
         setCodewords,
         callState,
